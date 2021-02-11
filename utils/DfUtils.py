@@ -5,6 +5,7 @@ Script with utils methods for managment and operations on pandas dataframes
 import numpy as np
 import pandas as pd
 import uproot
+import aghast
 
 
 def WriteTree(df, cols, treeName, fileName):
@@ -13,7 +14,6 @@ def WriteTree(df, cols, treeName, fileName):
 
     Arguments
     ----------
-
     - pandas data frame to be written as tree in a root file
     - name of the columns
     - name of the output tree
@@ -33,12 +33,10 @@ def GetMaskOfBits(bits):
 
     Arguments
     ----------
-
     - list of bits
 
     Returns
     ----------
-
     - mask corresponding to the input bits
     '''
     mask = 0
@@ -54,7 +52,6 @@ def FilterBitDf(dfToFilter, column, bitsToTest, logic='or'):
 
     Arguments
     ----------
-
     - pandas dataframe to filter
     - colum with bitmap
     - list of bits to test
@@ -89,7 +86,6 @@ def LoadDfFromRootOrParquet(inFileNames, inDirNames=None, inTreeNames=None, flat
 
     Arguments
     ----------
-
     - input file name of list of input file names
     - input dir name of list of input dir names (needed only in case of root files)
 
@@ -135,7 +131,6 @@ def GetMind0(ptList, d0List, ptThrs):
 
     Arguments
     ----------
-
     - list of pt of daughter tracks
     - list of impact parameters of daughter tracks
     - pt threshold (selected less than threshold)
@@ -153,3 +148,29 @@ def GetMind0(ptList, d0List, ptThrs):
         return 999.
 
     return min(d0SelList)
+
+def MakeHist(data, histoName='', title=';;', **kwds):
+    '''
+    Helper method to create a TH1 from a numpy array (can be obtained from a pandas column using .to_numpy()).
+    It uses numpy.histrogram and aghast to avoid the fill loop. Working only for 1D histograms
+
+    Arguments
+    ----------
+    - data: 1D numpy array
+    - histoName: string with histogram name
+    - title: string with format histoTitle;xAxisTitle;yAxisTitle
+    - kwds: info on how to build the histogram (binning, weights, etc.) passed to numpy.histogram
+            see https://numpy.org/doc/stable/reference/generated/numpy.histogram.html
+    
+    Returns
+    ----------
+    - rootHist: filled ROOT.TH1
+    '''
+    ghost_hist = aghast.from_numpy(np.histogram(data, **kwds))
+    rootHist = aghast.to_root(ghost_hist, histoName)
+    title = title.split(';')
+    rootHist.SetTitle(title[0])
+    rootHist.GetXaxis().SetTitle(title[1])
+    rootHist.GetYaxis().SetTitle(title[2])
+
+    return rootHist

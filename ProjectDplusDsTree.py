@@ -18,10 +18,9 @@ import yaml
 import numpy as np
 import uproot
 from scipy.interpolate import InterpolatedUnivariateSpline
-from root_numpy import fill_hist
 from ROOT import TFile, TH1F, TDatabasePDG # pylint: disable=import-error,no-name-in-module
 from utils.TaskFileLoader import LoadNormObjFromTask, LoadSparseFromTask
-from utils.DfUtils import FilterBitDf, LoadDfFromRootOrParquet
+from utils.DfUtils import FilterBitDf, LoadDfFromRootOrParquet, MakeHist
 from utils.AnalysisUtils import MergeHists, ApplySplineFuncToColumn
 
 parser = argparse.ArgumentParser(description='Arguments to pass')
@@ -205,38 +204,45 @@ if isMC:
         # reco histos from trees
         dataFramePromptSel = dataFramePrompt.astype(float).query(cuts)
         dataFrameFDSel = dataFrameFD.astype(float).query(cuts)
-        hPtPrompt = TH1F(f'hPromptPt_{ptLowLabel:.0f}_{ptHighLabel:.0f}', '', nPtBins, ptLimLow, ptLimHigh)
-        hInvMassPrompt = TH1F(f'hPromptMass_{ptLowLabel:.0f}_{ptHighLabel:.0f}', '', massBins, massLimLow, massLimHigh)
-        hPtFD = TH1F(f'hFDPt_{ptLowLabel:.0f}_{ptHighLabel:.0f}', '', nPtBins, ptLimLow, ptLimHigh)
-        hInvMassFD = TH1F(f'hFDMass_{ptLowLabel:.0f}_{ptHighLabel:.0f}', '', massBins, massLimLow, massLimHigh)
+        hPtPrompt, hPtFD = None, None
+        hInvMassPrompt, hInvMassFD = None, None
 
         if args.ptweights:
-            hTmp = hPtPrompt.Clone('hTmp')
-            fill_hist(hTmp, dataFramePromptSel['pt_cand'].values) # for stat unc
-            fill_hist(hPtPrompt, dataFramePromptSel['pt_cand'].values, weights=dataFramePromptSel['pt_weights'].values)
+            hTmp = MakeHist(dataFramePromptSel['pt_cand'].to_numpy(), 'hTmp',
+                            bins=nPtBins, range=(ptLimLow, ptLimHigh)) # for stat unc
+            hPtPrompt = MakeHist(dataFramePromptSel['pt_cand'].to_numpy(),
+                                 f'hPromptPt_{ptLowLabel:.0f}_{ptHighLabel:.0f}', bins=nPtBins,
+                                 range=(ptLimLow, ptLimHigh), weights=dataFramePromptSel['pt_weights'].to_numpy())
             for iPt in range(1, hTmp.GetNbinsX()+1):
                 if hTmp.GetBinContent(iPt) == 0.:
                     hPtPrompt.SetBinError(iPt, 0.)
                 else:
                     hPtPrompt.SetBinError(iPt, 1./np.sqrt(hTmp.GetBinContent(iPt))*hPtPrompt.GetBinContent(iPt))
         else:
-            fill_hist(hPtPrompt, dataFramePromptSel['pt_cand'].values)
+            hPtPrompt = MakeHist(dataFramePromptSel['pt_cand'].to_numpy(),
+                                 f'hPromptPt_{ptLowLabel:.0f}_{ptHighLabel:.0f}', bins=nPtBins,
+                                 range=(ptLimLow, ptLimHigh))
             hPtPrompt.Sumw2()
-        fill_hist(hInvMassPrompt, dataFramePromptSel['inv_mass'].values)
+        hInvMassPrompt = MakeHist(dataFramePromptSel['inv_mass'].to_numpy(),
+                                  f'hPromptMass_{ptLowLabel:.0f}_{ptHighLabel:.0f}',
+                                  bins=massBins, range=(massLimLow, massLimHigh))
 
         if args.ptweightsB or args.ptweights:
-            hTmp = hPtFD.Clone('hTmp')
-            fill_hist(hTmp, dataFrameFDSel['pt_cand'].values) # for stat unc
-            fill_hist(hPtFD, dataFrameFDSel['pt_cand'].values, weights=dataFrameFDSel['pt_weights'].values)
+            hTmp = MakeHist(dataFrameFDSel['pt_cand'].to_numpy(), 'hTmp', bins=nPtBins,
+                            range=(ptLimLow, ptLimHigh)) # for stat unc
+            hPtFD = MakeHist(dataFrameFDSel['pt_cand'].to_numpy(), f'hFDPt_{ptLowLabel:.0f}_{ptHighLabel:.0f}',
+                             bins=nPtBins, range=(ptLimLow, ptLimHigh), weights=dataFrameFDSel['pt_weights'].to_numpy())
             for iPt in range(1, hTmp.GetNbinsX()+1):
                 if hTmp.GetBinContent(iPt) == 0.:
                     hPtFD.SetBinError(iPt, 0.)
                 else:
                     hPtFD.SetBinError(iPt, 1./np.sqrt(hTmp.GetBinContent(iPt))*hPtFD.GetBinContent(iPt))
         else:
-            fill_hist(hPtFD, dataFrameFDSel['pt_cand'].values)
+            hPtFD = MakeHist(dataFrameFDSel['pt_cand'].to_numpy(), f'hFDPt_{ptLowLabel:.0f}_{ptHighLabel:.0f}',
+                             bins=nPtBins, range=(ptLimLow, ptLimHigh))
             hPtFD.Sumw2()
-        fill_hist(hInvMassFD, dataFrameFDSel['inv_mass'].values)
+        hInvMassFD = MakeHist(dataFrameFDSel['inv_mass'].to_numpy(), f'hFDMass_{ptLowLabel:.0f}_{ptHighLabel:.0f}',
+                              bins=massBins, range=(massLimLow, massLimHigh))
 
         promptDict['InvMass'].append(hInvMassPrompt)
         promptDict['Pt'].append(hPtPrompt)
@@ -281,10 +287,10 @@ else:
         ptLowLabel = ptMin * 10
         ptHighLabel = ptMax * 10
         dataFrameSel = dataFrame.astype(float).query(cuts)
-        hPt = TH1F(f'hPt_{ptLowLabel:.0f}_{ptHighLabel:.0f}', '', nPtBins, ptLimLow, ptLimHigh)
-        hInvMass = TH1F(f'hMass_{ptLowLabel:.0f}_{ptHighLabel:.0f}', '', massBins, massLimLow, massLimHigh)
-        fill_hist(hPt, dataFrameSel['pt_cand'].values)
-        fill_hist(hInvMass, dataFrameSel['inv_mass'].values)
+        hPt = MakeHist(dataFrameSel['pt_cand'].to_numpy(), f'hPt_{ptLowLabel:.0f}_{ptHighLabel:.0f}',
+                       bins=nPtBins, range=(ptLimLow, ptLimHigh))
+        hInvMass = MakeHist(dataFrameSel['inv_mass'].to_numpy, f'hMass_{ptLowLabel:.0f}_{ptHighLabel:.0f}',
+                            bins=massBins, range=(massLimLow, massLimHigh))
         allDict['InvMass'].append(hInvMass)
         allDict['Pt'].append(hPt)
         outFile.cd()

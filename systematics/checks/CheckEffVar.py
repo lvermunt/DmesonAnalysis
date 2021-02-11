@@ -8,10 +8,9 @@ import sys
 import argparse
 import yaml
 import numpy as np
-from root_numpy import fill_hist
 from ROOT import TH1F, kRed, kAzure, kFullCircle, TCanvas, TLegend # pylint: disable=import-error,no-name-in-module
 sys.path.append('../..')
-from utils.DfUtils import LoadDfFromRootOrParquet  #pylint: disable=wrong-import-position,import-error
+from utils.DfUtils import LoadDfFromRootOrParquet, MakeHist  #pylint: disable=wrong-import-position,import-error
 from utils.StyleFormatter import SetGlobalStyle, SetObjectStyle  #pylint: disable=wrong-import-position,import-error
 
 def main(): #pylint: disable=too-many-locals,too-many-statements
@@ -45,19 +44,19 @@ def main(): #pylint: disable=too-many-locals,too-many-statements
     nBins = inputCfg['scan_variable']['histo_bins']
     binLims = inputCfg['scan_variable']['histo_lims']
     varName = inputCfg['scan_variable']['name']
-    hPromptP6 = TH1F('hPromptP6', f';{varTitle};Counts', nBins, binLims[0], binLims[1])
-    hPromptP8 = TH1F('hPromptP8', f';{varTitle};Counts', nBins, binLims[0], binLims[1])
-    hFDP6 = TH1F('hFDP6', f';{varTitle};Counts', nBins, binLims[0], binLims[1])
-    hFDP8 = TH1F('hFDP8', f';{varTitle};Counts', nBins, binLims[0], binLims[1])
     scaleFactor = inputCfg['scan_variable']['rescale_factor']
     dfPromptP6[varName] = dfPromptP6[varName] * scaleFactor
     dfPromptP8[varName] = dfPromptP8[varName] * scaleFactor
     dfFDP6[varName] = dfFDP6[varName] * scaleFactor
     dfFDP8[varName] = dfFDP8[varName] * scaleFactor
-    fill_hist(hPromptP6, dfPromptP6[varName].values)
-    fill_hist(hPromptP8, dfPromptP8[varName].values)
-    fill_hist(hFDP6, dfFDP6[varName].values)
-    fill_hist(hFDP8, dfFDP8[varName].values)
+    hPromptP6 = MakeHist(dfPromptP6[varName].to_numpy(), 'hPromptP6', f';{varTitle};Counts',
+                         bins=nBins, range=(binLims[0], binLims[1]))
+    hPromptP8 = MakeHist(dfPromptP8[varName].to_numpy(), 'hPromptP8', f';{varTitle};Counts',
+                         bins=nBins, range=(binLims[0], binLims[1]))
+    hFDP6 = MakeHist(dfFDP6[varName].to_numpy(), 'hFDP6', f';{varTitle};Counts',
+                     bins=nBins, range=(binLims[0], binLims[1]))
+    hFDP8 = MakeHist(dfFDP8[varName].to_numpy(), 'hFDP8', f';{varTitle};Counts',
+                     bins=nBins, range=(binLims[0], binLims[1]))
     SetObjectStyle(hPromptP6, color=kAzure+4, marker=kFullCircle)
     SetObjectStyle(hPromptP8, color=kRed+1, marker=kFullCircle)
     SetObjectStyle(hFDP6, color=kAzure+4, marker=kFullCircle)

@@ -9,7 +9,6 @@ import time
 import itertools
 import numpy as np
 import yaml
-from root_numpy import fill_hist
 from ROOT import TFile, TH1F, TH2F, TF1, TCanvas, TNtuple, TDirectoryFile  # pylint: disable=import-error,no-name-in-module
 from ROOT import gROOT, kRainBow, kBlack, kFullCircle  # pylint: disable=import-error,no-name-in-module
 sys.path.append('..')
@@ -17,7 +16,7 @@ from utils.AnalysisUtils import ComputeEfficiency, GetPromptFDFractionFc, GetExp
 from utils.AnalysisUtils import  GetExpectedBkgFromMC, GetExpectedSignal  #pylint: disable=wrong-import-position,import-error
 from utils.FitUtils import SingleGaus #pylint: disable=wrong-import-position,import-error
 from utils.StyleFormatter import SetGlobalStyle, SetObjectStyle  #pylint: disable=wrong-import-position,import-error
-from utils.DfUtils import LoadDfFromRootOrParquet  #pylint: disable=wrong-import-position,import-error
+from utils.DfUtils import LoadDfFromRootOrParquet, MakeHist  #pylint: disable=wrong-import-position,import-error
 from utils.ReadModel import ReadTAMU, ReadPHSD, ReadMCatsHQ, ReadCatania  #pylint: disable=wrong-import-position,import-error
 
 parser = argparse.ArgumentParser(description='Arguments to pass')
@@ -252,9 +251,9 @@ for iPt, (ptMin, ptMax) in enumerate(zip(ptMins, ptMaxs)):
     crossSecFD = hCrossSecFD.Integral(ptBinCrossSecMin, ptBinCrossSecMax, 'width') / (ptMax - ptMin)
 
     # signal histograms
-    hMassSignal = TH1F(f'hMassSignal_pT{ptMin}-{ptMax}', ';#it{M} (GeV/#it{c});Counts', 400,
-                       min(dfPromptPt['inv_mass']), max(dfPromptPt['inv_mass']))
-    fill_hist(hMassSignal, np.concatenate((dfPromptPt['inv_mass'].values, dfFDPt['inv_mass'].values)))
+    hMassSignal = MakeHist(np.concatenate((dfPromptPt['inv_mass'].to_numpy(), dfFDPt['inv_mass'].to_numpy())),
+                           f'hMassSignal_pT{ptMin}-{ptMax}', ';#it{M} (GeV/#it{c});Counts',
+                           bins=400, range=(min(dfPromptPt['inv_mass']), max(dfPromptPt['inv_mass'])))
     funcSignal = TF1('funcSignal', SingleGaus, 1.6, 2.2, 3)
     funcSignal.SetParameters(hMassSignal.Integral('width'), hMassSignal.GetMean(), hMassSignal.GetRMS())
     hMassSignal.Fit('funcSignal', 'Q0')
@@ -264,9 +263,10 @@ for iPt, (ptMin, ptMax) in enumerate(zip(ptMins, ptMaxs)):
     meanSecPeak = inputCfg['infiles']['secpeak']['mean']
     sigmaSecPeak = inputCfg['infiles']['secpeak']['sigma']
     if dfSecPeakPrompt and dfSecPeakFD:
-        hMassSecPeak = TH1F(f'hMassSignal_pT{ptMin}-{ptMax}', ';#it{M} (GeV/#it{c});Counts', 400,
-                            min(dfSecPeakPrompt['inv_mass']), max(dfSecPeakPrompt['inv_mass']))
-        fill_hist(hMassSecPeak, np.concatenate((dfSecPeakPrompt['inv_mass'].values, dfSecPeakFD['inv_mass'].values)))
+        hMassSecPeak = MakeHist(np.concatenate((dfSecPeakPrompt['inv_mass'].to_numpy(),
+                                                dfSecPeakFD['inv_mass'].to_numpy())),
+                                f'hMassSecPeak_pT{ptMin}-{ptMax}', ';#it{M} (GeV/#it{c});Counts',
+                                bins=400, range=(min(dfSecPeakPrompt['inv_mass']), max(dfSecPeakPrompt['inv_mass'])))
         funcSignal.SetParameters(hMassSecPeak.Integral('width'), hMassSecPeak.GetMean(), hMassSecPeak.GetRMS())
         hMassSecPeak.Fit('funcSignal', 'Q0')
         meanSecPeak = funcSignal.GetParameter(1)
@@ -318,9 +318,9 @@ for iPt, (ptMin, ptMax) in enumerate(zip(ptMins, ptMaxs)):
             effTimesAccFD = effFD * preselEffFD * acc
             fPrompt, fFD = GetPromptFDFractionFc(effTimesAccPrompt, effTimesAccFD,
                                                  crossSecPrompt, crossSecFD, RaaPrompt, RaaFD)
-            hMassBkg = TH1F(f'hMassBkg_pT{ptMin}-{ptMax}_cutSet{iSet}', ';#it{M} (GeV/#it{c});Counts', 200,
-                            min(dfBkgPtSel['inv_mass']), max(dfBkgPtSel['inv_mass']))
-            fill_hist(hMassBkg, dfBkgPtSel['inv_mass'].values)
+            hMassBkg = MakeHist(dfBkgPtSel['inv_mass'].to_numpy(), f'hMassBkg_pT{ptMin}-{ptMax}_cutSet{iSet}',
+                                ';#it{M} (GeV/#it{c});Counts', bins=200,
+                                range=(min(dfBkgPtSel['inv_mass']), max(dfBkgPtSel['inv_mass'])))
 
             # expected signal, BR already included in cross section
             if inputCfg['expectedSignalFrom'] == 'prompt':

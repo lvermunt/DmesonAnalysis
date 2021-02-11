@@ -4,11 +4,11 @@ Utility script to compare the FONLL predictions for B and D from B
 import sys
 import pandas as pd
 import numpy as np
-from root_numpy import fill_hist
-from ROOT import TCanvas, TLegend, TH1D, gPad #pylint: disable=import-error,no-name-in-module
+from ROOT import TCanvas, TLegend, gPad #pylint: disable=import-error,no-name-in-module
 from ROOT import kRed, kAzure, kFullCircle, kFullSquare #pylint: disable=import-error,no-name-in-module
 sys.path.append('..')
 from utils.StyleFormatter import SetGlobalStyle, SetObjectStyle #pylint: disable=wrong-import-position,import-error
+from utils.DfUtils import MakeHist #pylint: disable=wrong-import-position,import-error
 
 def main(): #pylint: disable=too-many-statements
     """
@@ -19,32 +19,27 @@ def main(): #pylint: disable=too-many-statements
     n_bins = 1001
     bin_width = 0.05 # GeV
     bin_lims = [i * bin_width for i in range(0, n_bins + 1)]
-    hFONLLBtoDCentral = TH1D('hDfromBpred_central',
-                             ';#it{p}_{T} (GeV/#it{c});#frac{d#sigma}{d#it{p}_{T}} (pb GeV^{-1} #it{c})',
-                             n_bins, np.asarray(bin_lims, 'd'))
-    hFONLLBtoDMin = TH1D('hDfromBpred_min',
-                         ';#it{p}_{T} (GeV/#it{c});#frac{d#sigma}{d#it{p}_{T}} (pb GeV^{-1} #it{c})',
-                         n_bins, np.asarray(bin_lims, 'd'))
-    hFONLLBtoDMax = TH1D('hDfromBpred_max',
-                         ';#it{p}_{T} (GeV/#it{c});#frac{d#sigma}{d#it{p}_{T}} (pb GeV^{-1} #it{c})',
-                         n_bins, np.asarray(bin_lims, 'd'))
-    hFONLLBCentral = TH1D('hBpred_central',
-                          ';#it{p}_{T} (GeV/#it{c});#frac{d#sigma}{d#it{p}_{T}} (pb GeV^{-1} #it{c})',
-                          n_bins, np.asarray(bin_lims, 'd'))
-    hFONLLBMin = TH1D('hBpred_min', ';#it{p}_{T} (GeV/#it{c});#frac{d#sigma}{d#it{p}_{T}} (pb GeV^{-1} #it{c})',
-                      n_bins, np.asarray(bin_lims, 'd'))
-    hFONLLBMax = TH1D('hBpred_max', ';#it{p}_{T} (GeV/#it{c});#frac{d#sigma}{d#it{p}_{T}} (pb GeV^{-1} #it{c})',
-                      n_bins, np.asarray(bin_lims, 'd'))
-
     fonllBtoD_df = pd.read_csv("fonll/FONLL_DfromB_pp5_y05_toCook.txt", sep=" ", header=14).astype('float64')
     fonllB_df = pd.read_csv("fonll/FONLL_B_pp5_y05.txt", sep=" ", header=13).astype('float64')
 
-    fill_hist(hFONLLBtoDCentral, fonllBtoD_df['pt'].values, fonllBtoD_df['central'].values)
-    fill_hist(hFONLLBtoDMin, fonllBtoD_df['pt'].values, fonllBtoD_df['min'].values)
-    fill_hist(hFONLLBtoDMax, fonllBtoD_df['pt'].values, fonllBtoD_df['max'].values)
-    fill_hist(hFONLLBCentral, fonllB_df['pt'].values, fonllB_df['central'].values)
-    fill_hist(hFONLLBMin, fonllB_df['pt'].values, fonllB_df['min'].values)
-    fill_hist(hFONLLBMax, fonllB_df['pt'].values, fonllB_df['max'].values)
+    hFONLLBtoDCentral = MakeHist(fonllBtoD_df['pt'].to_numpy(), 'hDfromBpred_central',
+                                 ';#it{p}_{T} (GeV/#it{c});#frac{d#sigma}{d#it{p}_{T}} (pb GeV^{-1} #it{c})',
+                                 bins=bin_lims, weights=fonllBtoD_df['central'].to_numpy())
+    hFONLLBtoDMin = MakeHist(fonllBtoD_df['pt'].to_numpy(), 'hDfromBpred_min',
+                             ';#it{p}_{T} (GeV/#it{c});#frac{d#sigma}{d#it{p}_{T}} (pb GeV^{-1} #it{c})',
+                             bins=bin_lims, weights=fonllBtoD_df['min'].to_numpy())
+    hFONLLBtoDMax = MakeHist(fonllBtoD_df['pt'].to_numpy(), 'hDfromBpred_max',
+                             ';#it{p}_{T} (GeV/#it{c});#frac{d#sigma}{d#it{p}_{T}} (pb GeV^{-1} #it{c})',
+                             bins=bin_lims, weights=fonllBtoD_df['max'].to_numpy())
+    hFONLLBCentral = MakeHist(fonllB_df['pt'].to_numpy(), 'hBpred_central',
+                              ';#it{p}_{T} (GeV/#it{c});#frac{d#sigma}{d#it{p}_{T}} (pb GeV^{-1} #it{c})',
+                              bins=bin_lims, weights=fonllB_df['central'].to_numpy())
+    hFONLLBMin = MakeHist(fonllB_df['pt'].to_numpy(), 'hBpred_min',
+                          ';#it{p}_{T} (GeV/#it{c});#frac{d#sigma}{d#it{p}_{T}} (pb GeV^{-1} #it{c})',
+                          bins=bin_lims, weights=fonllB_df['min'].to_numpy())
+    hFONLLBMax = MakeHist(fonllB_df['pt'].to_numpy(), 'hBpred_max',
+                          ';#it{p}_{T} (GeV/#it{c});#frac{d#sigma}{d#it{p}_{T}} (pb GeV^{-1} #it{c})',
+                          bins=bin_lims, weights=fonllB_df['max'].to_numpy())
 
     for iBin in range(hFONLLBtoDCentral.GetNbinsX()):
         hFONLLBtoDCentral.SetBinError(iBin + 1, 1.e-3)

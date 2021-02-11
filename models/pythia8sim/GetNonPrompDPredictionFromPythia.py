@@ -5,12 +5,11 @@ Script to get the non-prompt D cross-section from Pythia8 (to run after Simulate
 import sys
 import argparse
 import yaml
-from root_numpy import fill_hist
-from ROOT import TFile, TCanvas, TLegend, TH1F #pylint: disable=import-error,no-name-in-module
+from ROOT import TFile, TCanvas, TLegend #pylint: disable=import-error,no-name-in-module
 from ROOT import kBlack, kRed, kAzure, kOrange, kGreen #pylint: disable=import-error,no-name-in-module
 sys.path.append('../..')
 from utils.StyleFormatter import SetGlobalStyle, SetObjectStyle  #pylint: disable=wrong-import-position,import-error
-from utils.DfUtils import LoadDfFromRootOrParquet #pylint: disable=wrong-import-position,import-error
+from utils.DfUtils import LoadDfFromRootOrParquet, MakeHist #pylint: disable=wrong-import-position,import-error
 
 parser = argparse.ArgumentParser(description='Arguments to pass')
 parser.add_argument('cfgFileName', metavar='text', default='cfgFileName.yml',
@@ -93,8 +92,7 @@ for D, BRD in zip(Dhadrons, BRDhadrons):
     cPtDFromB[D].SetLogy()
     for iB, (B, FFb) in enumerate(zip(Bhadrons, FFbtoB)):
         kineDfSelDSelB = kineDfSelDAcc.query(f'pdgB == {B}')
-        hPtDFromB[D][B] = TH1F(f'hPt{D}From{B}', '', 1001, 0., 50.05)
-        fill_hist(hPtDFromB[D][B], kineDfSelDSelB['ptD'].values)
+        hPtDFromB[D][B] = MakeHist(kineDfSelDSelB['ptD'].to_numpy(), f'hPt{D}From{B}', bins=1001, range=(0., 50.05))
         hPtDFromB[D][B].Sumw2()
         hPtDFromB[D][B].Scale(1.e-6 * BRBhadronsToD[B][D] * FFb * norm * acc * BRD / hPtDFromB[D][B].Integral())
         SetObjectStyle(hPtDFromB[D][B], linecolor=Bcolors[iB], markercolor=Bcolors[iB], linewidth=1, markerstyle=0)

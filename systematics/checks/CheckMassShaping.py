@@ -8,13 +8,12 @@ import os
 import sys
 import argparse
 import yaml
-from root_numpy import fill_hist
 from ROOT import TCanvas, TLegend, TDatabasePDG, TH1F, TH2F, TF1, TLine, TGraph, TVirtualFitter, TLatex # pylint: disable=import-error,no-name-in-module
 from ROOT import kFullCircle, kFullSquare, kRainBow, kRed, kAzure, kGray, kBlack # pylint: disable=import-error,no-name-in-module
 from ROOT import RooStats # pylint: disable=import-error,no-name-in-module
 sys.path.append('../..')
 from utils.TaskFileLoader import LoadSingleSparseFromTask  #pylint: disable=wrong-import-position,import-error
-from utils.DfUtils import LoadDfFromRootOrParquet  #pylint: disable=wrong-import-position,import-error
+from utils.DfUtils import LoadDfFromRootOrParquet, MakeHist  #pylint: disable=wrong-import-position,import-error
 from utils.StyleFormatter import SetObjectStyle, SetGlobalStyle, DivideCanvas  #pylint: disable=wrong-import-position,import-error
 
 SetGlobalStyle(palette=kRainBow, padbottommargin=0.14, padrightmargin=0.14,
@@ -120,14 +119,6 @@ else: # data from tree/dataframe
 
     for iPt, (cuts, ptMin, ptMax) in enumerate(zip(selToApply, cutVars['Pt']['min'], cutVars['Pt']['max'])):
         print(f'Projecting distributions for {ptMin:.1f} < pT < {ptMax:.1f} GeV/c')
-
-        hMassNoSel.append(TH1F(f'hMassNoSelPt{ptMin:.0f}_{ptMax:.0f}',
-                               f'{ptMin} < #it{{p}}_{{T}} < {ptMax} (GeV/#it{{c}});{massTitle};Counts',
-                               massBins, massLimLow, massLimHigh))
-        hMassSel.append(TH1F(f'hMassSelPt{ptMin:.0f}_{ptMax:.0f}',
-                             f'{ptMin} < #it{{p}}_{{T}} < {ptMax} (GeV/#it{{c}});{massTitle};Counts',
-                             massBins, massLimLow, massLimHigh))
-
         hMassVsML.append({})
         for var in dataFrameBkg.columns:
             if 'ML' in var:
@@ -136,12 +127,16 @@ else: # data from tree/dataframe
                                            100, min(dataFrameBkg[var]), max(dataFrameBkg[var]))
 
         dataFrameBkgPtSel = dataFrameBkg.astype(float).query(f'{ptMin} < pt_cand < {ptMax}')
-        fill_hist(hMassNoSel[iPt], dataFrameBkgPtSel['inv_mass'].values)
+        hMassNoSel.append(MakeHist(dataFrameBkgPtSel['inv_mass'].to_numpy(), f'hMassNoSelPt{ptMin:.0f}_{ptMax:.0f}',
+                                   f'{ptMin} < #it{{p}}_{{T}} < {ptMax} (GeV/#it{{c}});{massTitle};Counts',
+                                   bins=massBins, range=(massLimLow, massLimHigh)))
         for var in hMassVsML[iPt]:
-            fill_hist(hMassVsML[iPt][var],
-                      list(zip(dataFrameBkgPtSel['inv_mass'].values, dataFrameBkgPtSel[var].values)))
+            for (mass, varVal) in zip(dataFrameBkgPtSel['inv_mass'].to_numpy(), dataFrameBkgPtSel[var].to_numpy()):
+                hMassVsML[iPt][var].fill(mass, varVal)
         dataFrameBkgSel = dataFrameBkg.astype(float).query(cuts)
-        fill_hist(hMassSel[iPt], dataFrameBkgSel['inv_mass'].values)
+        hMassSel.append(MakeHist(dataFrameBkgSel['inv_mass'].to_numpy(), f'hMassSelPt{ptMin:.0f}_{ptMax:.0f}',
+                                 f'{ptMin} < #it{{p}}_{{T}} < {ptMax} (GeV/#it{{c}});{massTitle};Counts',
+                                 bins=massBins, range=(massLimLow, massLimHigh)))
 
 hMassSel[iPt].Rebin(args.rebin)
 hMassNoSel[iPt].Rebin(args.rebin)

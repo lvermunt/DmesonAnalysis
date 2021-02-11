@@ -4,11 +4,11 @@ Utility script to "cook" the FONLL prediction for the non-prompt Ds
 import sys
 import pandas as pd
 import numpy as np
-from root_numpy import fill_hist
-from ROOT import TFile, TCanvas, TLegend, TH1D, gPad #pylint: disable=import-error,no-name-in-module
+from ROOT import TFile, TCanvas, TLegend, gPad #pylint: disable=import-error,no-name-in-module
 from ROOT import kRed, kAzure, kFullCircle, kFullSquare #pylint: disable=import-error,no-name-in-module
 sys.path.append('..')
 from utils.StyleFormatter import SetGlobalStyle, SetObjectStyle #pylint: disable=wrong-import-position,import-error
+from utils.DfUtils import MakeHist #pylint: disable=wrong-import-position,import-error
 
 def main(): #pylint: disable=too-many-statements
     """
@@ -25,21 +25,17 @@ def main(): #pylint: disable=too-many-statements
     n_bins = 1001
     bin_width = 0.05 # GeV
     bin_lims = [i * bin_width for i in range(0, n_bins + 1)]
-    hFONLLCentral = TH1D('hDsPhipitoKkpifromBpred_central_corr',
-                         ';#it{p}_{T} (GeV/#it{c});#frac{d#sigma}{d#it{p}_{T}} (pb GeV^{-1} #it{c})',
-                         n_bins, np.asarray(bin_lims, 'd'))
-    hFONLLMin = TH1D('hDsPhipitoKkpifromBpred_min_corr',
-                     ';#it{p}_{T} (GeV/#it{c});#frac{d#sigma}{d#it{p}_{T}} (pb GeV^{-1} #it{c})',
-                     n_bins, np.asarray(bin_lims, 'd'))
-    hFONLLMax = TH1D('hDsPhipitoKkpifromBpred_max_corr',
-                     ';#it{p}_{T} (GeV/#it{c});#frac{d#sigma}{d#it{p}_{T}} (pb GeV^{-1} #it{c})',
-                     n_bins, np.asarray(bin_lims, 'd'))
-
     fonll_df = pd.read_csv("fonll/FONLL_DfromB_pp5_y05_toCook.txt", sep=" ", header=14).astype('float64')
 
-    fill_hist(hFONLLCentral, fonll_df['pt'].values, fonll_df['central'].values * cooked_factor)
-    fill_hist(hFONLLMin, fonll_df['pt'].values, fonll_df['min'].values * cooked_factor)
-    fill_hist(hFONLLMax, fonll_df['pt'].values, fonll_df['max'].values * cooked_factor)
+    hFONLLCentral = MakeHist(fonll_df['pt'].to_numpy(), 'hDsPhipitoKkpifromBpred_central_corr',
+                             ';#it{p}_{T} (GeV/#it{c});#frac{d#sigma}{d#it{p}_{T}} (pb GeV^{-1} #it{c})',
+                             bins=bin_lims, weigths=fonll_df['central'].to_numpy()*cooked_factor)
+    hFONLLMin = MakeHist(fonll_df['pt'].to_numpy(), 'hDsPhipitoKkpifromBpred_min_corr',
+                         ';#it{p}_{T} (GeV/#it{c});#frac{d#sigma}{d#it{p}_{T}} (pb GeV^{-1} #it{c})',
+                         bins=bin_lims, weigths=fonll_df['min'].to_numpy()*cooked_factor)
+    hFONLLMax = MakeHist(fonll_df['pt'].to_numpy(), 'hDsPhipitoKkpifromBpred_max_corr',
+                         ';#it{p}_{T} (GeV/#it{c});#frac{d#sigma}{d#it{p}_{T}} (pb GeV^{-1} #it{c})',
+                         bins=bin_lims, weigths=fonll_df['max'].to_numpy()*cooked_factor)
 
     for iBin in range(hFONLLCentral.GetNbinsX()):
         #print(f'{hFONLLCentral.GetBinContent(iBin + 1):.4e}')

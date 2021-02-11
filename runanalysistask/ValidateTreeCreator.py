@@ -10,11 +10,11 @@ import pandas as pd
 import numba
 import six
 import uproot
-from root_numpy import fill_hist # pylint: disable=import-error, no-name-in-module
 from ROOT import TFile, TCanvas, TH1F, TLegend # pylint: disable=import-error, no-name-in-module
 from ROOT import kBlack, kRed, kFullCircle, kOpenSquare # pylint: disable=import-error, no-name-in-module
 sys.path.append('..')
 from utils.StyleFormatter import SetGlobalStyle, SetObjectStyle #pylint: disable=wrong-import-position,import-error
+from utils.DfUtils import MakeHist #pylint: disable=wrong-import-position,import-error
 
 
 @numba.njit
@@ -81,8 +81,8 @@ for counter, iVar in enumerate(Vars):
     nbins = hMassTask[iVar].GetNbinsX()
     mmin = hMassTask[iVar].GetBinLowEdge(1)
     mmax = hMassTask[iVar].GetBinLowEdge(nbins)+hMassTask[iVar].GetBinWidth(nbins)
-    hMassTreeCreator[iVar] = TH1F('hMassTreeCreator{0}'.format(iVar), '', nbins, mmin, mmax)
-    fill_hist(hMassTreeCreator[iVar], dfMergedSel[iVar].values)
+    hMassTreeCreator[iVar] = MakeHist(dfMergedSel[iVar].to_numpy(), f'hMassTreeCreator{iVar}',
+                                      bins=nbins, range=(mmin, mmax))
     SetObjectStyle(hMassTreeCreator[iVar], color=kRed, markerstyle=kOpenSquare)
     cComparison[iVar] = TCanvas('cComparison{0}'.format(iVar), '', 800, 800)
     ymax = hMassTask[iVar].GetMaximum()*2
@@ -106,7 +106,4 @@ cEvents = TCanvas('cEvents', '', 800, 800)
 hSelEv.Draw('E')
 cEvents.SaveAs('selected_events.pdf')
 
-if six.PY2:
-    raw_input('Press enter to exit')
-elif six.PY3:
-    input('Press enter to exit')
+input('Press enter to exit')
