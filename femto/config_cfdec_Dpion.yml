@@ -1,0 +1,23 @@
+input:
+    ry_filename: /home/daniel/alice/CharmingAnalyses/DKDpi/starting_selections/data/purity/D/RawYields_Dpion.root
+    sideband_dir: /home/daniel/alice/CharmingAnalyses/DKDpi/starting_selections/data/cf/
+    # particle1: Kplus
+    # particle2: [Dminus, Dplus]
+    specifier: PIplusDminus
+    output: /home/daniel/alice/CharmingAnalyses/DKDpi/starting_selections/lambdaparam/test #wo extension
+rebin: 3
+sources:
+    particle1: ['D', 'D #leftarrow H_{b}', 'D #leftarrow D*', 'Comb. Bkg'] # Dmeson
+    particle2: ['Id. K'] # Kaon
+
+fit:
+    method: legendre5
+    range: [0., 3000.]
+
+    parmin: [-3., -3., -3., -3., -3., -3.]
+    parmax: [+2., +2., +2., +2., +2., +2.]
+
+sidebands:
+    combmethod: kAverage
+    weigtleftsb: 0.1
+    weigtrightsb: 0.9
