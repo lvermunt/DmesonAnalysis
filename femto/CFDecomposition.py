@@ -66,7 +66,7 @@ for l in range(0, deg+1):
     fitFuncSBL.SetParLimits(l, cfg['fit']['parmin'][l], cfg['fit']['parmax'][l])
     fitFuncSBL.SetParameter(l, (cfg['fit']['parmin'][l] + cfg['fit']['parmax'][l])/2)
     fitFuncSBR.SetParLimits(l, cfg['fit']['parmin'][l], cfg['fit']['parmax'][l])
-    fitFuncSBR.SetParameter(l, (cfg['fit']['parmin'][l] + cfg['fit']['parmax'][l])/2)
+    fitFuncSBR.SetParameter(l, (0.9*cfg['fit']['parmin'][l] + cfg['fit']['parmax'][l])/2)
 
 # Create a TGraphErrors to hold the confidence intervals
 grintSBL, grintSBR = TGraphErrors(1), TGraphErrors(1)
@@ -81,7 +81,7 @@ for i in range(gSBL.GetN()):
         nPointsCLSBL += 1
 gSBL.Fit('fitFuncSBL', 'MR+', '', fitRangeMin, fitRangeMax)
 cl = int(TMath.Erf(1/TMath.Sqrt(2)))
-TVirtualFitter.GetFitter().GetConfidenceIntervals(grintSBL, TMath.Erf(1/TMath.Sqrt(2))) # 1sigma conf. band
+TVirtualFitter.GetFitter().GetConfidenceIntervals(grintSBL, TMath.Erf(1./TMath.Sqrt(2))) # 1sigma conf. band
 
 
 for i in range(gSBR.GetN()):
@@ -104,16 +104,13 @@ nSignal = gSignal.GetN()
 if cfg['sidebands']['combmethod'] == 'kWeighAverage':
     pass
 elif cfg['sidebands']['combmethod'] == 'kAverage':
-    modelSB = TF1('sb', '0.5 * fitFuncSBL + 0.5*fitFuncSBR', fitRangeMin, fitRangeMax)
-    ccc = TCanvas()
-    fitFuncSBL.Draw()
-    fitFuncSBR.Draw('same')
-    modelSB.SetlineColor(kBlue)
-    modelSB.Draw('same')
-    # sys.exit()
+    def modelSBFunc(x, par):
+        return 0.5 * (fitFuncSBL.Eval(x[0])+fitFuncSBR.Eval(x[0]))
+    
+    modelSB = TF1('sb', modelSBFunc, fitRangeMin, fitRangeMax)
+
     uncSB = [0.5 * np.sqrt(splineUncSBL.Eval(iX)**2 + splineUncSBR.Eval(iX)**2) for iX in range(nSignal)]
-    splineUncSB = (ctypes.c_double * nSBL)(*uncSB)
-    splineUnc = TSpline3('splUncCF', gSignal.GetX(), splineUncSB, nSignal)
+    splineUnc = TSpline3('splUncCF', gSignal.GetX(), (ctypes.c_double * nSBL)(*uncSB), nSignal)
 
 else:
     print(f'\033[41mError:\033[0m the combination mehod {fitMethod} is not implemented. Exit!')
@@ -121,14 +118,28 @@ else:
 
 gSignalSBCorrected = TGraphErrors(nSignal)
 for iP, (iX, iY) in enumerate(zip(gSignal.GetX(), gSignal.GetY())):
-    lambdaPar = 0.5
-    print(iY, modelSB.Eval(iX), (iY - lambdaPar * modelSB.Eval(iX)), (iY - lambdaPar * modelSB.Eval(iX))/(1 - lambdaPar))
-    gSignalSBCorrected.SetPoint(iP, iX, (iY - lambdaPar * modelSB.Eval(iX))/(1 - lambdaPar))
-    gSignalSBCorrected.SetPointError(iP, gSignal.GetErrorX(iP), splineUnc.Eval(iX))
+    lambdaParSgn = 0.7 # todo: fix fractions
+    lambdaParBkg = 0.3 # todo: fix fractions
+    gSignalSBCorrected.SetPoint(iP, iX, (iY - lambdaParBkg * modelSB.Eval(iX))/(1 - lambdaParBkg))
 
-c = TCanvas('cc', 'ccccc')
-gSignal.Draw('ape')
-gSignalSBCorrected.Draw('pe same')
+    # Gaussian error propagation
+    CFRaw = gSignal.GetPointY(iP)
+    CFRawUnc = gSignal.GetErrorY(iP)
+    lambdaParBkgUnc = 0.01# todo: fix uncertainties
+    lambdaParSgnUnc = 0.01 # todo: fix uncertainties
+    CFSB = modelSB.Eval(iX)
+    CFSBUnc = splineUnc.Eval(iX)
+
+    unc2 = \
+        (CFRawUnc/lambdaParSgn)**2 + \
+        (CFSB*lambdaParBkgUnc/lambdaParSgn)**2 + \
+        (lambdaParBkg*CFSBUnc/lambdaParSgn)**2 + \
+        (CFRaw/lambdaParSgn/lambdaParSgn - lambdaParBkg*CFSB/lambdaParSgn/lambdaParSgn)**2
+    gSignalSBCorrected.SetPointError(iP, gSignal.GetErrorX(iP), np.sqrt(unc2))
+    
+
+
+
 # Make plots and drawings
 oFile = TFile(f'{outputFileName}.root', 'RECREATE')
 gStyle.SetOptFit(11111111)
@@ -172,6 +183,18 @@ legSBR.Draw()
 cSBR.Print(f'{outputFileName}_fitSBR.pdf')
 cSBR.Write()
 ################################################################################
+
+# Comparison between before and after SB correction
+cCFSBCorrected = TCanvas('cCFSBCorrected', 'with and without correction', 600, 600)
+SetObjectStyle(gSignal)
+SetObjectStyle(gSignalSBCorrected, markercolor=kBlue)
+gSignal.Draw('ape')
+gSignalSBCorrected.SetLineColor(kBlue)
+legSBCorrected = TLegend(0.45, 0.15, '')
+legSBCorrected.AddEntry(gSignal, 'Before SB correction')
+legSBCorrected.AddEntry(gSignalSBCorrected, 'After SB correction')
+legSBCorrected.Draw()
+gSignalSBCorrected.Draw('pe same')
 
 
 
