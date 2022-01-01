@@ -53,7 +53,7 @@ OutDirCrossSec=""
 OutDirRaa=""
 ################################################################################################
 
-if [ ${Particle} != "Dplus" ] && [ ${Particle} != "Ds" ] && [ ${Particle} != "Lc" ]; then
+if [ ${Particle} != "Dplus" ] && [ ${Particle} != "Ds" ]  && [ ${Particle} != "Dstar" ] && [ ${Particle} != "Lc" ]; then
   echo $(tput setaf 1) ERROR: only Ds and Dplus mesons are supported! $(tput sgr0)
   exit 2
 fi
@@ -177,15 +177,21 @@ if $DoMCProjection; then
     echo $(tput setaf 4) Projecting MC distributions $(tput sgr0)
     if [ "${PtWeightsDFileName}" == "" -o "${PtWeightsDHistoName}" == "" ] && [ "${PtWeightsBFileName}" == "" -o "${PtWeightsBHistoName}" == "" ] && [ "${MultWeightsFileName}" == "" -o "${MultWeightsHistoName}" == "" ]; then
       python3 ${ProjectScript} ${cfgFileMC} ${CutSetsDir}/cutset${CutSets[$iCutSet]}.yml  ${OutDirEfficiency}/Distr_${Particle}_MC${CutSets[$iCutSet]}.root
-    elif [ "${PtWeightsDFileName}" != "" ] && [ "${PtWeightsDHistoName}" != "" ] && [ "${PtWeightsBFileName}" == "" -o "${PtWeightsBHistoName}" == "" ]; then
+    elif [ "${PtWeightsDFileName}" != "" ] && [ "${PtWeightsDHistoName}" != "" ] && [ "${PtWeightsBFileName}" == "" -o "${PtWeightsBHistoName}" == "" ] && [ "${MultWeightsFileName}" == "" ] && [ "${MultWeightsHistoName}" == "" ]; then
         echo $(tput setaf 6) Using ${PtWeightsDHistoName} pt weights from ${PtWeightsDFileName} $(tput sgr0)
         python3 ${ProjectScript} ${cfgFileMC} ${CutSetsDir}/cutset${CutSets[$iCutSet]}.yml  ${OutDirEfficiency}/Distr_${Particle}_MC${CutSets[$iCutSet]}.root --ptweights ${PtWeightsDFileName} ${PtWeightsDHistoName}
-    elif [ "${PtWeightsDFileName}" != "" ] && [ "${PtWeightsDHistoName}" != "" ] && [ "${PtWeightsBFileName}" != "" ] && [ "${PtWeightsBHistoName}" != "" ]; then
+    elif [ "${PtWeightsDFileName}" != "" ] && [ "${PtWeightsDHistoName}" != "" ] && [ "${PtWeightsBFileName}" != "" ] && [ "${PtWeightsBHistoName}" != "" ] && [ "${MultWeightsFileName}" == "" ] && [ "${MultWeightsHistoName}" == "" ]; then
         echo $(tput setaf 6) Using ${PtWeightsDHistoName} pt weights from ${PtWeightsDFileName} and ${PtWeightsBHistoName} ptB weights from ${PtWeightsBFileName} $(tput sgr0)
         python3 ${ProjectScript} ${cfgFileMC} ${CutSetsDir}/cutset${CutSets[$iCutSet]}.yml  ${OutDirEfficiency}/Distr_${Particle}_MC${CutSets[$iCutSet]}.root --ptweights ${PtWeightsDFileName} ${PtWeightsDHistoName} --ptweightsB ${PtWeightsBFileName} ${PtWeightsBHistoName}
-    elif [ "${MultWeightsFileName}" != "" ] && [ "${MultWeightsHistoName}" != "" ]; then
+    elif [ "${MultWeightsFileName}" != "" ] && [ "${MultWeightsHistoName}" != "" ] && [ "${PtWeightsDFileName}" == "" ] && [ "${PtWeightsDHistoName}" == "" ] && [ "${PtWeightsBFileName}" == "" ] && [ "${PtWeightsBHistoName}" == "" ]; then
         echo $(tput setaf 6) Using ${MultWeightsHistoName} mult weights from ${MultWeightsFileName} $(tput sgr0)
         python3 ${ProjectScript} ${cfgFileMC} ${CutSetsDir}/cutset${CutSets[$iCutSet]}.yml  ${OutDirEfficiency}/Distr_${Particle}_MC${CutSets[$iCutSet]}.root --multweights ${MultWeightsFileName} ${MultWeightsHistoName}
+    elif [ "${MultWeightsFileName}" != "" ] && [ "${MultWeightsHistoName}" != "" ] && [ "${PtWeightsDFileName}" != "" ] && [ "${PtWeightsDHistoName}" != "" ] && [ "${PtWeightsBFileName}" == "" ] && [ "${PtWeightsBHistoName}" == "" ]; then
+        echo $(tput setaf 6) Using ${MultWeightsHistoName} mult weights from ${MultWeightsFileName} and ${PtWeightsDHistoName} pt weights from ${PtWeightsDFileName} $(tput sgr0)
+        python3 ${ProjectScript} ${cfgFileMC} ${CutSetsDir}/cutset${CutSets[$iCutSet]}.yml  ${OutDirEfficiency}/Distr_${Particle}_MC${CutSets[$iCutSet]}.root --multweights ${MultWeightsFileName} ${MultWeightsHistoName} --ptweights ${PtWeightsDFileName} ${PtWeightsDHistoName}
+    elif [ "${MultWeightsFileName}" != "" ] && [ "${MultWeightsHistoName}" != "" ] && [ "${PtWeightsDFileName}" != "" ] && [ "${PtWeightsDHistoName}" != "" ] && [ "${PtWeightsBFileName}" != "" ] && [ "${PtWeightsBHistoName}" != "" ]; then
+        echo $(tput setaf 6) Using ${MultWeightsHistoName} mult weights from ${MultWeightsFileName} and ${PtWeightsDHistoName} pt weights from ${PtWeightsDFileName} and ${PtWeightsBHistoName} ptB weights from ${PtWeightsBFileName} $(tput sgr0)
+        python3 ${ProjectScript} ${cfgFileMC} ${CutSetsDir}/cutset${CutSets[$iCutSet]}.yml  ${OutDirEfficiency}/Distr_${Particle}_MC${CutSets[$iCutSet]}.root --multweights ${MultWeightsFileName} ${MultWeightsHistoName} --ptweights ${PtWeightsDFileName} ${PtWeightsDHistoName} --ptweightsB ${PtWeightsBFileName} ${PtWeightsBHistoName}
     fi
   done
 fi
