@@ -668,7 +668,7 @@ def ComputeRatioGraph(gNum, gDen, useDenUnc=True):
         print('ERROR: only graphs with same number of bins can be divided!')
         return None
 
-    gRatio = TGraphAsymmErrors(0)
+    gRatio = TGraphAsymmErrors(1)
     for iPt in range(gNum.GetN()):
         x, num = ctypes.c_double(), ctypes.c_double()
         xd, den = ctypes.c_double(), ctypes.c_double()

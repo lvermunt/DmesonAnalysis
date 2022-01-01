@@ -1,6 +1,7 @@
 '''
-Script for fitting D+ and Ds+ invariant-mass spectra
-run: python GetRawYieldsDsDplus.py fitConfigFileName.yml centClass inputFileName.root outFileName.root
+Script for fitting D+, D0 and Ds+ invariant-mass spectra
+run: python GetRawYieldsDsDplus.py fitConfigFileName.yml centClass inputFileName.root outFileName.root 
+            [--refFileName][--isMC][--batch]
 '''
 
 import sys
@@ -18,6 +19,7 @@ parser.add_argument('fitConfigFileName', metavar='text', default='config_Ds_Fit.
 parser.add_argument('centClass', metavar='text', default='')
 parser.add_argument('inFileName', metavar='text', default='')
 parser.add_argument('outFileName', metavar='text', default='')
+parser.add_argument('--refFileName', metavar='text', default='')
 parser.add_argument('--isMC', action='store_true', default=False)
 parser.add_argument('--batch', help='suppress video output', action='store_true')
 args = parser.parse_args()
@@ -50,6 +52,10 @@ ptMins = fitConfig[cent]['PtMin']
 ptMaxs = fitConfig[cent]['PtMax']
 fixSigma = fitConfig[cent]['FixSigma']
 fixMean = fitConfig[cent]['FixMean']
+if 'EnableRef' not in fitConfig[cent]:
+    enableRef = False
+else:
+    enableRef = fitConfig[cent]['EnableRef']
 if not isinstance(fixSigma, list):
     fixSigma = [fixSigma for _ in ptMins]
 if not isinstance(fixMean, list):
@@ -62,39 +68,39 @@ particleName = fitConfig[cent]['Particle']
 inclSecPeak = fitConfig[cent]['InclSecPeak']
 
 SgnFunc, BkgFunc, degPol = [], [], []
-for iPt, (bkg, sgn) in enumerate(zip(fitConfig[cent]['BkgFunc'], fitConfig[cent]['SgnFunc'])):
+for iPt, (bkgStr, sgnStr) in enumerate(zip(fitConfig[cent]['BkgFunc'], fitConfig[cent]['SgnFunc'])):
     degPol.append(-1)
-    if bkg == 'kExpo':
+    if bkgStr == 'kExpo':
         BkgFunc.append(AliHFInvMassFitter.kExpo)
-    elif bkg == 'kLin':
+    elif bkgStr == 'kLin':
         BkgFunc.append(AliHFInvMassFitter.kLin)
-    elif bkg == 'kPol2':
+    elif bkgStr == 'kPol2':
         BkgFunc.append(AliHFInvMassFitter.kPol2)
-    elif bkg == 'kPol3':
+    elif bkgStr == 'kPol3':
         BkgFunc.append(6)
         degPol[-1] = 3
         if len(ptMins) > 1 and inclSecPeak[iPt] == 1:
             print('ERROR: Pol3 and Pol4 fits work only with one bin if you have the secondary peak! Exit!')
             sys.exit()
-    elif bkg == 'kPol4':
+    elif bkgStr == 'kPol4':
         BkgFunc.append(6)
         degPol[-1] = 4
         if len(ptMins) > 1 and inclSecPeak[iPt] == 1:
             print('ERROR: Pol3 and Pol4 fits work only with one bin if you have the secondary peak! Exit!')
             sys.exit()
-    elif bkg == 'kPow':
+    elif bkgStr == 'kPow':
         BkgFunc.append(AliHFInvMassFitter.kPow)
-    elif bkg == 'kPowEx':
+    elif bkgStr == 'kPowEx':
         BkgFunc.append(AliHFInvMassFitter.kPowEx)
     else:
         print('ERROR: only kExpo, kLin, kPol2, kPol3, kPol4, kPow, and kPowEx background functions supported! Exit')
         sys.exit()
 
-    if sgn == 'kGaus':
+    if sgnStr == 'kGaus':
         SgnFunc.append(AliHFInvMassFitter.kGaus)
-    elif sgn == 'k2Gaus':
+    elif sgnStr == 'k2Gaus':
         SgnFunc.append(AliHFInvMassFitter.k2Gaus)
-    elif sgn == 'k2GausSigmaRatioPar':
+    elif sgnStr == 'k2GausSigmaRatioPar':
         SgnFunc.append(AliHFInvMassFitter.k2GausSigmaRatioPar)
     else:
         print('ERROR: only kGaus, k2Gaus and k2GausSigmaRatioPar signal functions supported! Exit!')
@@ -108,6 +114,8 @@ elif particleName == 'Lc':
     massAxisTit = '#it{M}(pK^{0}_{s}) (GeV/#it{c}^{2})'
 elif particleName == 'Dstar':
     massAxisTit = '#it{M}(K#pi#pi) - #it{M}(K#pi) (GeV/#it{c}^{2})'
+elif particleName == 'D0':
+    massAxisTit = '#it{M}(K#pi) (GeV/#it{c}^{2})'
 else:
     print(f'ERROR: the particle "{particleName}" is not supported! Choose between Dplus, Ds, Dstar, and Lc. Exit!')
     sys.exit()
@@ -117,12 +125,26 @@ infile = TFile.Open(args.inFileName)
 if not infile or not infile.IsOpen():
     print(f'ERROR: file "{args.inFileName}" cannot be opened! Exit!')
     sys.exit()
+if enableRef:
+    infileref = TFile.Open(args.refFileName)
+    if not (infileref and infileref.IsOpen()):
+        print(f'ERROR: file "{args.refFileName}" cannot be opened! Exit!')
+        sys.exit()
 
+hRel, hSig, hMassForRel, hMassForSig  = [], [], [], []
 hMass, hMassForFit = [], []
 for iPt, (ptMin, ptMax, secPeak) in enumerate(zip(ptMins, ptMaxs, inclSecPeak)):
     if not args.isMC:
         hMass.append(infile.Get('hMass_{0:.0f}_{1:.0f}'.format(ptMin*10, ptMax*10)))
         hMass[iPt].SetDirectory(0)
+        if enableRef:
+            hRel.append(infileref.Get('hVarReflMass_{0:.0f}_{1:.0f}'.format(ptMin*10, ptMax*10)))
+            hSig.append(infileref.Get('hFDMass_{0:.0f}_{1:.0f}'.format(ptMin*10, ptMax*10)))
+            hSig[iPt].Add(infileref.Get('hPromptMass_{0:.0f}_{1:.0f}'.format(ptMin*10, ptMax*10)))
+            hRel[iPt].SetDirectory(0)
+            hSig[iPt].SetDirectory(0)
+            hRel[iPt].Sumw2()
+            hSig[iPt].Sumw2()
     else:
         hMass.append(infile.Get('hPromptMass_{0:.0f}_{1:.0f}'.format(ptMin*10, ptMax*10)))
         hMass[iPt].Add(infile.Get('hFDMass_{0:.0f}_{1:.0f}'.format(ptMin*10, ptMax*10)))
@@ -286,6 +308,7 @@ massDplus = TDatabasePDG.Instance().GetParticle(411).Mass()
 massDs = TDatabasePDG.Instance().GetParticle(431).Mass()
 massLc = TDatabasePDG.Instance().GetParticle(4122).Mass()
 massDstar = TDatabasePDG.Instance().GetParticle(413).Mass() - TDatabasePDG.Instance().GetParticle(421).Mass()
+massD0 = TDatabasePDG.Instance().GetParticle(421).Mass()
 
 if particleName == 'Dplus':
     massForFit=massDplus
@@ -293,6 +316,8 @@ elif particleName == 'Ds':
     massForFit = massDs
 elif particleName == 'Dstar':
     massForFit = massDstar
+elif particleName == 'D0':
+    massForFit = massD0
 else:
     massForFit = massLc
 
@@ -311,7 +336,7 @@ for iCanv in range(nCanvases):
     DivideCanvas(cResiduals[iCanv], nPads)
 
 massFitter = []
-for iPt, (hM, ptMin, ptMax, reb, sgn, bkg, secPeak, massMin, massMax) in enumerate(
+for iPt, (hM, ptMin, ptMax, reb, sgnEnum, bkgEnum, secPeak, massMin, massMax) in enumerate(
         zip(hMass, ptMins, ptMaxs, fitConfig[cent]['Rebin'], SgnFunc, BkgFunc, inclSecPeak, fitConfig[cent]['MassMin'],
             fitConfig[cent]['MassMax'])):
     iCanv = int(np.floor(iPt / nMaxCanvases))
@@ -322,6 +347,11 @@ for iPt, (hM, ptMin, ptMax, reb, sgn, bkg, secPeak, massMin, massMax) in enumera
     hMassForFit[iPt].SetTitle((f'{ptMin:0.1f} < #it{{p}}_{{T}} < {ptMax:0.1f} GeV/#it{{c}};{massAxisTit};'
                                f'Counts per {binWidth*1000:.0f} MeV/#it{{c}}^{{2}}'))
     hMassForFit[iPt].SetName(f'MassForFit{iPt}')
+    if not args.isMC and enableRef:
+        hMassForRel.append(TH1F())
+        hMassForSig.append(TH1F())
+        AliVertexingHFUtils.RebinHisto(hRel[iPt], reb).Copy(hMassForRel[iPt])
+        AliVertexingHFUtils.RebinHisto(hSig[iPt], reb).Copy(hMassForSig[iPt])
     if nPtBins < 15:
         markerSize = 1.
     else:
@@ -333,7 +363,7 @@ for iPt, (hM, ptMin, ptMax, reb, sgn, bkg, secPeak, massMin, massMax) in enumera
         parRawYield, parMean, parSigma1 = 0, 1, 2 # always the same
         parSigma2, parFrac2Gaus, parRawYieldSecPeak, parMeanSecPeak, parSigmaSecPeak = (-1 for _ in range(5))
 
-        if sgn == AliHFInvMassFitter.kGaus:
+        if sgnEnum == AliHFInvMassFitter.kGaus:
             if not (secPeak and particleName == 'Ds'):
                 massFunc = TF1(f'massFunc{iPt}', SingleGaus, massMin, massMax, 3)
                 massFunc.SetParameters(hMassForFit[iPt].Integral() * binWidth, massForFit, 0.010)
@@ -345,7 +375,7 @@ for iPt, (hM, ptMin, ptMax, reb, sgn, bkg, secPeak, massMin, massMax) in enumera
                 parMeanSecPeak = 4
                 parSigmaSecPeak = 5
 
-        elif sgn == AliHFInvMassFitter.k2Gaus:
+        elif sgnEnum == AliHFInvMassFitter.k2Gaus:
             parSigma2 = 3
             parFrac2Gaus = 4
             if not (secPeak and particleName == 'Ds'):
@@ -410,7 +440,7 @@ for iPt, (hM, ptMin, ptMax, reb, sgn, bkg, secPeak, massMin, massMax) in enumera
             hRawYieldsSecPeakTrue.SetBinContent(iPt+1, rawyield)
             hRelDiffRawYieldsSecPeakFitTrue.SetBinContent(iPt+1, rawyield)
 
-        if sgn == AliHFInvMassFitter.k2Gaus:
+        if sgnEnum == AliHFInvMassFitter.k2Gaus:
             sigma2 = massFunc.GetParameter(parSigma2)
             sigma2err = massFunc.GetParError(parSigma2)
             frac2gaus = massFunc.GetParameter(parFrac2Gaus)
@@ -421,7 +451,7 @@ for iPt, (hM, ptMin, ptMax, reb, sgn, bkg, secPeak, massMin, massMax) in enumera
             hRawYieldsFracGaus2.SetBinError(iPt+1, frac2gauserr)
 
     else:  # data
-        massFitter.append(AliHFInvMassFitter(hMassForFit[iPt], massMin, massMax, bkg, sgn))
+        massFitter.append(AliHFInvMassFitter(hMassForFit[iPt], massMin, massMax, bkgEnum, sgnEnum))
         if degPol[iPt] > 0:
             massFitter[iPt].SetPolDegreeForBackgroundFit(degPol[iPt])
 
@@ -472,6 +502,17 @@ for iPt, (hM, ptMin, ptMax, reb, sgn, bkg, secPeak, massMin, massMax) in enumera
                     massFitter[iPt].IncludeSecondGausPeak(massDplus, False, sigmaRatioMC * sigmaFirstPeak, True)
             else:
                 massFitter[iPt].IncludeSecondGausPeak(massDplus, False, fitConfig[cent]['SigmaSecPeak'][iPt], True)
+        if enableRef:
+            rOverS = hMassForSig[iPt].Integral(
+                hMassForSig[iPt].FindBin(massMin * 1.0001),
+                hMassForSig[iPt].FindBin(massMax * 0.999)
+            )
+            rOverS /= hMassForRel[iPt].Integral(
+                hMassForRel[iPt].FindBin(massMin * 1.0001),
+                hMassForRel[iPt].FindBin(massMax * 0.999)
+            )
+            massFitter[iPt].SetFixReflOverS(rOverS)
+            massFitter[iPt].SetTemplateReflections(hRel[iPt], "2gaus", massMin, massMax);
         massFitter[iPt].MassFitter(False)
 
         rawyield = massFitter[iPt].GetRawYield()
@@ -506,11 +547,28 @@ for iPt, (hM, ptMin, ptMax, reb, sgn, bkg, secPeak, massMin, massMax) in enumera
         hRawYieldsChiSquare.SetBinContent(iPt+1, redchi2)
         hRawYieldsChiSquare.SetBinError(iPt+1, 1.e-20)
 
+        for iS in range(len(nSigma4SandB)):
+            massFitter[iPt].Significance(nSigma4SandB[iS],signif,signiferr)
+            massFitter[iPt].Signal(nSigma4SandB[iS],sgn,sgnerr)
+            massFitter[iPt].Background(nSigma4SandB[iS],bkg,bkgerr)
+
+            hRawYieldsSignalDiffSigma[iS].SetBinContent(iPt+1,sgn.value)
+            hRawYieldsSignalDiffSigma[iS].SetBinError(iPt+1,sgnerr.value)
+            hRawYieldsBkgDiffSigma[iS].SetBinContent(iPt+1,bkg.value)
+            hRawYieldsBkgDiffSigma[iS].SetBinError(iPt+1,bkgerr.value)
+            hRawYieldsSoverBDiffSigma[iS].SetBinContent(iPt+1,sgn.value/bkg.value)
+            hRawYieldsSoverBDiffSigma[iS].SetBinError(
+                iPt+1,
+                sgn.value/bkg.value*np.sqrt(sgnerr.value**2/sgn.value**2+bkgerr.value**2/bkg.value**2)
+            )
+            hRawYieldsSignifDiffSigma[iS].SetBinContent(iPt+1,signif.value)
+            hRawYieldsSignifDiffSigma[iS].SetBinError(iPt+1,signiferr.value)
+        
         fTotFunc = massFitter[iPt].GetMassFunc()
         fBkgFunc = massFitter[iPt].GetBackgroundRecalcFunc()
 
         parFrac2Gaus, parsecondsigma = -1, -1
-        if sgn.value == AliHFInvMassFitter.k2Gaus:
+        if sgnEnum == AliHFInvMassFitter.k2Gaus:
             if not (inclSecPeak and particleName == 'Ds'):
                 parFrac2Gaus = fTotFunc.GetNpar()-2
                 parsecondsigma = fTotFunc.GetNpar()-1
