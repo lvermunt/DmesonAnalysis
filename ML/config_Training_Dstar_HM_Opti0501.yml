@@ -1,0 +1,100 @@
+input: # files to use, set FD to null for binary classification
+    prompt_foldername: /data/TTree/DstarFemto/vAN-20211215_ROOT6-1/pp_sim/662_20211216-1321/merged/
+    prompt: Prompt__Dstar_MC_20161718_HM_Opti_pT_0_50.parquet.gzip
+    FD_foldername: /data/TTree/DstarFemto/vAN-20211215_ROOT6-1/pp_sim/662_20211216-1321/merged/
+    FD: FD__Dstar_MC_20161718_HM_Opti_pT_0_50.parquet.gzip
+    data_foldername: /data/TTree/DstarFemto/vAN-20211215_ROOT6-1/pp_data/661_20211216-1322_663_20211219-2005/merged/
+    data: Data__Dstar_Data_20161718_HM_Opti_pT_0_50.parquet.gzip
+    treename: null
+
+    #null if you don't want to apply preselections
+    preselections: null 
+    #nsigComb_Pi_0 < 80 and nsigComb_Pi_1 < 80 and nsigComb_Pi_2 < 80 and nsigComb_K_0 < 80 and nsigComb_K_1 < 80 and nsigComb_K_2 < 80 and abs(nsigComb_Pi_0) != 999 and abs(nsigComb_Pi_1) != 999 and abs(nsigComb_Pi_2) != 999 and abs(nsigComb_K_0) != 999 and abs(nsigComb_K_1) != 999 and abs(nsigComb_K_2) != 999
+
+output:
+    leg_labels: # legend labels, keep the right number of classes
+        Bkg: Background
+        Prompt: Prompt D$^{*+}$
+        FD: Feed-down D$^{*+}$
+    out_labels: # output labels, keep the right number of classes
+        Bkg: Bkg
+        Prompt: Prompt
+        FD: FD
+    dir: '/home/lvermunt/FemtoAnalysis/ML_Training/Dstar_050122_v2_HypOpt/' # output dir
+
+pt_ranges: # ranges in pt to split the data in the ml training and testing
+    min: [1, 2, 4, 6, 8, 12] # list
+    max: [2, 4, 6, 8, 12, 50] # list
+
+data_prep:
+    filt_bkg_mass: inv_mass > .155 # pandas query to select bkg candidates
+    dataset_opt: equal  # change how the dataset is built, options available: 'equal', 'max_signal'
+                        # 'equal' -> same number of prompt/FD/bkg (not using all the signal available)
+                        # 'max_signal' -> try to use all the signal (prompt and FD) + add n_bkg = 2 * (n_prompt + n_FD)
+    bkg_mult: [2., 1., 0.5, 0.3, 0.3, 0.2] # list of multipliers for (nPrompt + nFD) used to determine nCandBkg in the 'max_signal' option
+    max_cand_for_equal: 500000
+    seed_split: 42 # seed used for train_test_split(...)
+    test_fraction: 0.2 # fraction of data used for test set and efficiencies     
+
+    #In case one pt bin is extremely large, one can speed up by adding an extra downscale factor for only this bin
+    proc_sep_query: ['pt_cand < 4 or pt_cand >= 8',
+                     'pt_cand >= 4 and pt_cand < 6',
+                     'pt_cand >= 6 and pt_cand < 8']
+    proc_sep_frac: [1, 0.01, 0.15]
+    proc_sep_ptbin: [[True, True, False, False, True, True],
+                     [False, False, True, False, False, False],
+                     [False, False, False, True, False, False]]
+
+ml:
+    raw_output: False # use raw_output (True) of probability (False) as output of the model
+    roc_auc_average: 'macro' # 'macro' or 'weighted'
+    roc_auc_approach: 'ovo'  # 'ovo' or 'ovr'
+    training_columns: [ d_len, d_len_xy, norm_dl_xy, cos_p, cos_p_xy, dca, imp_par_xy, max_norm_d0d0exp, imp_par_prod,
+                        nsigComb_Pi_1, nsigComb_K_1, nsigComb_Pi_2, nsigComb_K_2]
+                       # list of training variables
+
+    hyper_par: [{'max_depth':4, 'learning_rate':0.1508, 'n_estimators':294, 'min_child_weight':2, 'subsample':0.838, 'colsample_bytree':0.827, 'n_jobs':10, 'tree_method':hist, 'eval_metric':mlogloss},
+                {'max_depth':5, 'learning_rate':0.1117, 'n_estimators':453, 'min_child_weight':2, 'subsample':0.931, 'colsample_bytree':0.958, 'n_jobs':10, 'tree_method':hist, 'eval_metric':mlogloss},
+                {'max_depth':4, 'learning_rate':0.1908, 'n_estimators':294, 'min_child_weight':3, 'subsample':0.831, 'colsample_bytree':0.875, 'n_jobs':10, 'tree_method':hist, 'eval_metric':mlogloss},
+                {'max_depth':5, 'learning_rate':0.1767, 'n_estimators':293, 'min_child_weight':2, 'subsample':0.963, 'colsample_bytree':0.870, 'n_jobs':10, 'tree_method':hist, 'eval_metric':mlogloss},
+                {'max_depth':5, 'learning_rate':0.1767, 'n_estimators':293, 'min_child_weight':2, 'subsample':0.963, 'colsample_bytree':0.870, 'n_jobs':10, 'tree_method':hist, 'eval_metric':mlogloss},
+                {'max_depth':5, 'learning_rate':0.1767, 'n_estimators':293, 'min_child_weight':2, 'subsample':0.963, 'colsample_bytree':0.870, 'n_jobs':10, 'tree_method':hist, 'eval_metric':mlogloss},
+                ]
+                # list of dicts of hyperparameters (one for each pT bin)
+
+    hyper_par_opt:
+      do_hyp_opt: True # whether to do the parameter optimization
+      njobs: 10 # number of parallel jobs used in hyper-parameter optimization, -1. to use all
+      nfolds: 5 # number of folds used in cross validation
+      initpoints: 20 # steps of random exploration you want to perform
+      niter: 20 # steps for bayesian optimization
+      bayes_opt_config: {'max_depth': !!python/tuple [2, 5],
+                         'learning_rate': !!python/tuple [0.01, 0.2],
+                         'n_estimators': !!python/tuple [200, 800],
+                         'min_child_weight': !!python/tuple [1, 4],
+                         'subsample': !!python/tuple [0.8, 1.],
+                         'colsample_bytree': !!python/tuple [0.8, 1.]}
+                        # configuration dictionary for optimize_params_bayes()
+    
+    saved_models: [/home/lvermunt/FemtoAnalysis/ML_Training/Dstar_050122_v2_HypOpt/ModelHandler_pT_1_2.pickle,
+                   /home/lvermunt/FemtoAnalysis/ML_Training/Dstar_050122_v2_HypOpt/ModelHandler_pT_2_4.pickle,
+                   /home/lvermunt/FemtoAnalysis/ML_Training/Dstar_050122_v2_HypOpt/ModelHandler_pT_4_6.pickle,
+                   /home/lvermunt/FemtoAnalysis/ML_Training/Dstar_050122_v2_HypOpt/ModelHandler_pT_6_8.pickle,
+                   /home/lvermunt/FemtoAnalysis/ML_Training/Dstar_050122_v2_HypOpt/ModelHandler_pT_8_12.pickle,
+                   /home/lvermunt/FemtoAnalysis/ML_Training/Dstar_050122_v2_HypOpt/ModelHandler_pT_12_50.pickle
+                  ] # list of saved ModelHandler (path+file), compatible with the pt bins
+
+plots:
+    plotting_columns: [inv_mass, pt_cand, d_len, d_len_xy, norm_dl_xy, cos_p, cos_p_xy, dca, imp_par_xy, max_norm_d0d0exp,
+                       delta_mass_D0, cos_t_star, angle_D0dkpPisoft, imp_par_prod,
+                       nsigComb_Pi_0, nsigComb_K_0, nsigComb_Pi_1, nsigComb_K_1, nsigComb_Pi_2, nsigComb_K_2]
+                       # list of variables to plot
+    train_test_log: True # use log scale for plots of train and test distributions
+  
+appl: 
+    column_to_save_list: ['inv_mass', 'pt_cand'] # list of variables saved in the dataframes with the applied models
+
+standalone_appl:
+    inputs: [] # list of parquet files for the model application
+    output_names: [] # names for the outputs (one for each file)
+    output_dir: null # output directory

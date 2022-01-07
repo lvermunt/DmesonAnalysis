@@ -1,0 +1,43 @@
+channel: Dstar # options [Ds, Dplus, Dstar, LctopKpi, LctopK0s, LctopiL]
+
+infile:
+    isMC: 1
+    #filename: [/data/TTree/DstarFemto/vAN-20211121_ROOT6-1/pp_cern.ch/654_20211125-1053/merged/AnalysisResults.root]
+    #foldername: /data/TTree/DstarFemto/vAN-20211121_ROOT6-1/pp_cern.ch/654_20211125-1053/unmerged/
+    #dirname: PWGHF_D2H_TreeDstartoD0piLoose_HM_Pola
+    filename: [/data/TTree/DstarFemto/vAN-20211215_ROOT6-1/pp_sim/662_20211216-1321/merged/AnalysisResults.root]
+    foldername: /data/TTree/DstarFemto/vAN-20211215_ROOT6-1/pp_sim/662_20211216-1321/merged/
+    dirname: PWGHF_D2H_TreeDstartoD0piLoose_HM_Opti
+    treename: treeMLD
+    listname: coutputTreeDstartoD0piLoose_HM_Opti
+    sparsenameprompt: fnSparseAcc_fromC
+    sparsenamefd: fnSparseAcc_fromB
+
+outfile:
+    #dirpath: '/data/TTree/DstarFemto/vAN-20211121_ROOT6-1/pp_cern.ch/654_20211125-1053/merged/'
+    #suffix: __Dstar_MC_20161718_HM_Pola_vall
+    dirpath: '/data/TTree/DstarFemto/vAN-20211215_ROOT6-1/pp_sim/662_20211216-1321/merged/'
+    suffix: __Dstar_MC_20161718_HM_Opti
+    treename: treeMLD
+    
+skimming:
+    pt:
+        min: 0
+        max: 50
+    analysisptbins: [1, 2, 4, 6, 8, 12, 50]
+    preselections: null
+    #preselections: nsigComb_Pi_0 < 25 and nsigComb_Pi_1 < 50 and nsigComb_Pi_2 < 80 and nsigComb_K_0 < 35 and nsigComb_K_1 < 40 and nsigComb_K_2 < 35  #null if you don't want to apply preselections
+    colstokeep: [inv_mass, pt_cand, d_len, d_len_xy, norm_dl_xy, cos_p, cos_p_xy, dca, imp_par_xy,  max_norm_d0d0exp, nsigComb_Pi_0, nsigComb_K_0, nsigComb_Pi_1, nsigComb_K_1, nsigComb_Pi_2, nsigComb_K_2, nsigTPC_Pi_0, nsigTPC_K_0, nsigTPC_Pi_1, nsigTPC_K_1, nsigTPC_Pi_2, nsigTPC_K_2, nsigTOF_Pi_0, nsigTOF_K_0, nsigTOF_Pi_1, nsigTOF_K_1, nsigTOF_Pi_2, nsigTOF_K_2, delta_mass_D0, angle_D0dkpPisoft, cos_t_star, imp_par_prod, pt_prong0, pt_prong1, pt_prong2] #empty list if you want to keep everything
+
+singletrackvars:
+    addAODfiltervars: 0 # it adds min pt and min d0 of daughters with pt < 2
+
+missingvalues: # values in dataframe to be replaced with NaN (only possible with python script)
+    enable: 0
+    toreplace:
+        nsigTOF_Pi_0: -999.
+        nsigTOF_K_0: -999.
+        nsigTOF_Pi_1: -999.
+        nsigTOF_K_1: -999.
+        nsigTOF_Pi_2: -999.
+        nsigTOF_K_2: -999.
