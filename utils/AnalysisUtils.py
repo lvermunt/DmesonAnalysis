@@ -339,8 +339,9 @@ def GetExpectedBkgFromSideBands(hMassData, bkgFunc='pol2', nSigmaForSB=4, mean=0
         numEntriesSB -= hMassData.Integral(hMassData.FindBin(meanSecPeak - nSigmaForSB * sigmaSecPeak),
                                            hMassData.FindBin(meanSecPeak + nSigmaForSB * sigmaSecPeak))
 
-    if numEntriesSB <= 5: # check to have some entries in the histogram before fitting
-        return 0., 0., hMassData
+    #Turn off for Dstar. See what is does..
+    #if numEntriesSB <= 5: # check to have some entries in the histogram before fitting
+    #    return 0., 0., hMassData
     if minmass is None:
         minMass = hMassData.GetBinLowEdge(1)
     else:
@@ -358,6 +359,7 @@ def GetExpectedBkgFromSideBands(hMassData, bkgFunc='pol2', nSigmaForSB=4, mean=0
         funcBkg = bkgFuncCreator.GetFullRangeFunc(funcBkgSB)
         expBkg3s = funcBkg.Integral(mean - 3 * sigma, mean + 3 * sigma) / hMassData.GetBinWidth(1)
         errExpBkg3s = funcBkg.IntegralError(mean - 3 * sigma, mean + 3 * sigma) / hMassData.GetBinWidth(1)
+        hMassData.GetListOfFunctions().Add(funcBkg)
     return expBkg3s, errExpBkg3s, hMassData
 
 

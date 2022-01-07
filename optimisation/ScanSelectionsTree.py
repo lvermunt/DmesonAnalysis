@@ -249,6 +249,8 @@ for iPt, (ptMin, ptMax) in enumerate(zip(ptMins, ptMaxs)):
     else:
         preselEffPrompt = 1.
         preselEffFD = 1.
+        preselEffPromptUnc = 0.01
+        preselEffFDUnc = 0.01
 
     # acceptance
     ptBinAccMin = hPtGenAcc.GetXaxis().FindBin(ptMin*1.0001)
@@ -268,7 +270,8 @@ for iPt, (ptMin, ptMax) in enumerate(zip(ptMins, ptMaxs)):
                        min(dfPromptPt['inv_mass']), max(dfPromptPt['inv_mass']))
     for mass in np.concatenate((dfPromptPt['inv_mass'].to_numpy(), dfFDPt['inv_mass'].to_numpy())):
         hMassSignal.Fill(mass)
-    funcSignal = TF1('funcSignal', SingleGaus, 1.6, 2.2, 3)
+    #funcSignal = TF1('funcSignal', SingleGaus, 1.6, 2.2, 3)
+    funcSignal = TF1('funcSignal', SingleGaus, 0.14, 0.18, 3)
     funcSignal.SetParameters(hMassSignal.Integral('width'), hMassSignal.GetMean(), hMassSignal.GetRMS())
     hMassSignal.Fit('funcSignal', 'Q0')
     mean = funcSignal.GetParameter(1)
@@ -276,6 +279,10 @@ for iPt, (ptMin, ptMax) in enumerate(zip(ptMins, ptMaxs)):
     # SecPeak
     meanSecPeak = inputCfg['infiles']['secpeak']['mean']
     sigmaSecPeak = inputCfg['infiles']['secpeak']['sigma']
+    outDirFitSBPt[iPt].cd()
+    hMassSignal.Write()
+    funcSignal.Write()
+
     if dfSecPeakPrompt and dfSecPeakFD:
         hMassSecPeak = TH1F(f'hMassSignal_pT{ptMin}-{ptMax}', ';#it{M} (GeV/#it{c});Counts', 400,
                             min(dfSecPeakPrompt['inv_mass']), max(dfSecPeakPrompt['inv_mass']))
@@ -285,6 +292,9 @@ for iPt, (ptMin, ptMax) in enumerate(zip(ptMins, ptMaxs)):
         hMassSecPeak.Fit('funcSignal', 'Q0')
         meanSecPeak = funcSignal.GetParameter(1)
         sigmaSecPeak = funcSignal.GetParameter(2)
+        outDirFitSBPt[iPt].cd()
+        hMassSecPeak.Write()
+        funcSignal.Write()
 
     # output histos
     hSignifVsRest.append(dict())
@@ -320,6 +330,7 @@ for iPt, (ptMin, ptMax) in enumerate(zip(ptMins, ptMaxs)):
                 if ParCutsName and EnableParCuts:
                     selToApply += f' & {ParCutMin} < {ParCutsName} < {ParCutMax}'
 
+                #print(selToApply, min(dfBkgPt['ML_output_Bkg']), min(dfBkgPt['pt_cand']))
                 bar()
 
                 dfPromptPtSel = dfPromptPt.query(selToApply)
@@ -332,8 +343,12 @@ for iPt, (ptMin, ptMax) in enumerate(zip(ptMins, ptMaxs)):
                 effTimesAccFD = effFD * preselEffFD * acc
                 fPrompt, fFD = GetPromptFDFractionFc(effTimesAccPrompt, effTimesAccFD,
                                                     crossSecPrompt, crossSecFD, RaaPrompt, RaaFD)
+                if len(dfBkgPtSel) == 0:
+                    continue
+
                 hMassBkg = TH1F(f'hMassBkg_pT{ptMin}-{ptMax}_cutSet{iSet}', ';#it{M} (GeV/#it{c});Counts', 200,
-                                min(dfBkgPtSel['inv_mass']), max(dfBkgPtSel['inv_mass']))
+                                minMass, maxMass)
+                                #min(dfBkgPtSel['inv_mass']), max(dfBkgPtSel['inv_mass']))
                 for mass in dfBkgPtSel['inv_mass'].to_numpy():
                     hMassBkg.Fill(mass)
 
@@ -357,8 +372,8 @@ for iPt, (ptMin, ptMax) in enumerate(zip(ptMins, ptMaxs)):
                                                                             bkgConfig['nSigma'], mean, sigma,
                                                                             meanSecPeak, sigmaSecPeak, minMass, maxMass)
                 hMassBkg.Write()
-                expBkg *= nExpEv / bkgConfig['nEvents'] / fractionstokeep[iPt]
-                errExpBkg *= nExpEv / bkgConfig['nEvents'] / fractionstokeep[iPt]
+                expBkg *= nExpEv / bkgConfig['nEvents'] / (fractionstokeep[iPt] * bkgConfig['downscalefraction'][iPt])
+                errExpBkg *= nExpEv / bkgConfig['nEvents'] / (fractionstokeep[iPt] * bkgConfig['downscalefraction'][iPt])
 
                 if inputCfg['infiles']['background']['corrfactor']['filename']:
                     inFile = TFile.Open(inputCfg['infiles']['background']['corrfactor']['filename'])

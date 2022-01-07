@@ -302,6 +302,8 @@ class BkgFitFuncCreator:
         funcBkgSB.SetParameter(0, integral)
         for iPar in range(1, self.__numPar[self.funcName]):
             funcBkgSB.SetParameter(iPar, 1.)
+        if self.funcName is 'expopow':
+            funcBkgSB.SetParameters(-10., 5.)
         funcBkgSB.SetLineColor(kBlue+2)
         return funcBkgSB
 
