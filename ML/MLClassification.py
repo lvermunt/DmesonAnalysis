@@ -19,6 +19,10 @@ from hipe4ml import plot_utils
 from hipe4ml.model_handler import ModelHandler
 from hipe4ml.tree_handler import TreeHandler
 
+from ROOT import TFile
+from utilities_plot import makefill2dhist, buildbinning
+from dedicated_to_root_plotting import extract_topo_distr_dstar
+
 def data_prep(inputCfg, iBin, PtBin, OutPutDirPt, PromptDf, FDDf, BkgDf): #pylint: disable=too-many-statements, too-many-branches
     '''
     function for data preparation
@@ -35,14 +39,59 @@ def data_prep(inputCfg, iBin, PtBin, OutPutDirPt, PromptDf, FDDf, BkgDf): #pylin
     dataset_opt = inputCfg['data_prep']['dataset_opt']
     seed_split = inputCfg['data_prep']['seed_split']
     test_f = inputCfg['data_prep']['test_fraction']
+    max_cand_for_equal = inputCfg['data_prep']['max_cand_for_equal']
+
+    #__________________________________________________
+    myfile_nsigpt = TFile.Open(f'{OutPutDirPt}/nsigma_vs_pT_{PtBin[0]}_{PtBin[1]}.root', 'RECREATE')
+    myfile_nsigpt.cd()
+    yname_ = ['nsigComb_Pi_0', 'nsigComb_K_0', 'nsigComb_Pi_1', 'nsigComb_K_1', 'nsigComb_Pi_2', 'nsigComb_K_2']
+    xname_ = ['pt_prong0', 'pt_prong0', 'pt_prong1', 'pt_prong1', 'pt_prong2', 'pt_prong2']
+    for yname, xname in zip(yname_, xname_):
+        binning_nsigma = buildbinning(1, -1000, -998)
+        binning_nsigma += buildbinning(2000, -100, 100)
+        binning_pt = buildbinning(420, -1, 20)
+        hbkg = makefill2dhist(BkgDf, f'hbkg_{yname}', binning_pt, binning_nsigma, xname, yname)
+        hbkg.SetTitle(f'Background Dstar -> D0#pi;{xname};{yname}')
+        hbkg.Write()
+        hpr = makefill2dhist(PromptDf, f'hpr_{yname}', binning_pt, binning_nsigma, xname, yname)
+        hpr.SetTitle(f'Prompt Dstar -> D0#pi;{xname};{yname}')
+        hpr.Write()
+        if not FDDf.empty:
+            hfd = makefill2dhist(FDDf, f'hfd_{yname}', binning_pt, binning_nsigma, xname, yname)
+            hfd.SetTitle(f'Feeddown Dstar -> D0#pi;{xname};{yname}')
+            hfd.Write()
+    myfile_nsigpt.Close()
+    #__________________________________________________
+    topovars_dstar = ['d_len', 'd_len_xy', 'norm_dl_xy', 'cos_p', 'cos_p_xy', 'dca', 'imp_par_xy', 'max_norm_d0d0exp', 'delta_mass_D0', 'cos_t_star']
+    extract_topo_distr_dstar(PtBin, OutPutDirPt, topovars_dstar, PromptDf, FDDf, BkgDf)
+    #__________________________________________________
+    myfile_varcorr = TFile.Open(f'{OutPutDirPt}/varcorrs_{PtBin[0]}_{PtBin[1]}.root', 'RECREATE')
+    myfile_varcorr.cd()
+    xname_ = ['inv_mass', 'inv_mass', 'inv_mass']
+    yname_ = ['angle_D0dkpPisoft', 'delta_mass_D0', 'pt_prong0']
+    binningx_ = [buildbinning(224, 0.138, 0.250), buildbinning(224, 0.138, 0.250), buildbinning(224, 0.138, 0.250)]
+    binningy_ = [buildbinning(200, 0, 0.5), buildbinning(200, 0., 100.), buildbinning(400, 0, 20)]
+    for xname, yname, binx, biny in zip(xname_, yname_, binningx_, binningy_):
+        hbkg = makefill2dhist(BkgDf, f'hbkg_{xname}_{yname}', binx, biny, xname, yname)
+        hbkg.SetTitle(f'Background Dstar -> D0#pi;{xname};{yname}')
+        hbkg.Write()
+        hpr = makefill2dhist(PromptDf, f'hpr_{xname}_{yname}', binx, biny, xname, yname)
+        hpr.SetTitle(f'Prompt Dstar -> D0#pi;{xname};{yname}')
+        hpr.Write()
+        if not FDDf.empty:
+            hfd = makefill2dhist(FDDf, f'hfd_{xname}_{yname}', binx, biny, xname, yname)
+            hfd.SetTitle(f'Feeddown Dstar -> D0#pi;{xname};{yname}')
+            hfd.Write()
+    myfile_varcorr.Close()
+    #__________________________________________________
 
     if dataset_opt == 'equal':
         if FDDf.empty:
-            nCandToKeep = min([nPrompt, nBkg])
+            nCandToKeep = min([nPrompt, nBkg, max_cand_for_equal])
             out = 'signal'
             out2 = 'signal'
         else:
-            nCandToKeep = min([nPrompt, nFD, nBkg])
+            nCandToKeep = min([nPrompt, nFD, nBkg, max_cand_for_equal])
             out = 'prompt, FD'
             out2 = 'prompt'
         print((f'Keep same number of {out} and background (minimum) for training and '
@@ -325,6 +374,16 @@ def main(): #pylint: disable=too-many-statements
                                             rndm_state=inputCfg['data_prep']['seed_split'])
     else:
         BkgHandler = DataHandler
+
+    PreSelection = inputCfg['input']['preselections']
+    print(f'\nTrying to apply preselections: {PreSelection}')
+    if PreSelection is not None:
+        PromptHandler.apply_preselections(PreSelection)
+        if FDHandler is not None:
+            FDHandler.apply_preselections(PreSelection)
+        DataHandler.apply_preselections(PreSelection)
+        BkgHandler.apply_preselections(PreSelection)
+        print(f'\nPreselections applied: {PreSelection}')
 
     PtBins = [[a, b] for a, b in zip(inputCfg['pt_ranges']['min'], inputCfg['pt_ranges']['max'])]
     PromptHandler.slice_data_frame('pt_cand', PtBins, True)
