@@ -53,17 +53,17 @@ ml:
                         nsigComb_Pi_1, nsigComb_K_1, nsigComb_Pi_2, nsigComb_K_2]
                        # list of training variables
 
-    hyper_par: [{'max_depth':4, 'learning_rate':0.1508, 'n_estimators':294, 'min_child_weight':2, 'subsample':0.838, 'colsample_bytree':0.827, 'n_jobs':10, 'tree_method':hist, 'eval_metric':mlogloss},
-                {'max_depth':5, 'learning_rate':0.1117, 'n_estimators':453, 'min_child_weight':2, 'subsample':0.931, 'colsample_bytree':0.958, 'n_jobs':10, 'tree_method':hist, 'eval_metric':mlogloss},
-                {'max_depth':4, 'learning_rate':0.1908, 'n_estimators':294, 'min_child_weight':3, 'subsample':0.831, 'colsample_bytree':0.875, 'n_jobs':10, 'tree_method':hist, 'eval_metric':mlogloss},
-                {'max_depth':5, 'learning_rate':0.1767, 'n_estimators':293, 'min_child_weight':2, 'subsample':0.963, 'colsample_bytree':0.870, 'n_jobs':10, 'tree_method':hist, 'eval_metric':mlogloss},
-                {'max_depth':5, 'learning_rate':0.1767, 'n_estimators':293, 'min_child_weight':2, 'subsample':0.963, 'colsample_bytree':0.870, 'n_jobs':10, 'tree_method':hist, 'eval_metric':mlogloss},
-                {'max_depth':5, 'learning_rate':0.1767, 'n_estimators':293, 'min_child_weight':2, 'subsample':0.963, 'colsample_bytree':0.870, 'n_jobs':10, 'tree_method':hist, 'eval_metric':mlogloss},
+    hyper_par: [{'max_depth':5, 'learning_rate':0.0451, 'n_estimators':763, 'min_child_weight':3, 'subsample':0.978, 'colsample_bytree':0.909, 'n_jobs':10, 'tree_method':hist, 'eval_metric':mlogloss},
+                {'max_depth':5, 'learning_rate':0.1240, 'n_estimators':735, 'min_child_weight':1, 'subsample':0.921, 'colsample_bytree':0.880, 'n_jobs':10, 'tree_method':hist, 'eval_metric':mlogloss},
+                {'max_depth':5, 'learning_rate':0.1636, 'n_estimators':736, 'min_child_weight':3, 'subsample':0.884, 'colsample_bytree':0.947, 'n_jobs':10, 'tree_method':hist, 'eval_metric':mlogloss},
+                {'max_depth':5, 'learning_rate':0.1921, 'n_estimators':446, 'min_child_weight':2, 'subsample':0.856, 'colsample_bytree':0.908, 'n_jobs':10, 'tree_method':hist, 'eval_metric':mlogloss},
+                {'max_depth':5, 'learning_rate':0.0939, 'n_estimators':763, 'min_child_weight':3, 'subsample':0.854, 'colsample_bytree':0.943, 'n_jobs':10, 'tree_method':hist, 'eval_metric':mlogloss},
+                {'max_depth':5, 'learning_rate':0.1467, 'n_estimators':734, 'min_child_weight':2, 'subsample':0.901, 'colsample_bytree':0.842, 'n_jobs':10, 'tree_method':hist, 'eval_metric':mlogloss},
                 ]
                 # list of dicts of hyperparameters (one for each pT bin)
 
     hyper_par_opt:
-      do_hyp_opt: True # whether to do the parameter optimization
+      do_hyp_opt: False # whether to do the parameter optimization
       njobs: 10 # number of parallel jobs used in hyper-parameter optimization, -1. to use all
       nfolds: 5 # number of folds used in cross validation
       initpoints: 20 # steps of random exploration you want to perform
