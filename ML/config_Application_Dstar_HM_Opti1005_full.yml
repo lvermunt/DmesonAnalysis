@@ -1,0 +1,79 @@
+input: # files to use, set FD to null for binary classification
+    prompt_foldername: /mnt/temp/OngoingAnalysis_DstarFemto/TTrees/vAN-20220424_ROOT6-1/pp_sim/687_20220425-1152/merged/
+    prompt: Prompt__Dstar_MC_20161718_HM_Opti_pT_0_50.parquet.gzip
+    FD_foldername: /mnt/temp/OngoingAnalysis_DstarFemto/TTrees/vAN-20220424_ROOT6-1/pp_sim/687_20220425-1152/merged/
+    FD: FD__Dstar_MC_20161718_HM_Opti_pT_0_50.parquet.gzip
+    data_foldername: [/mnt/temp/OngoingAnalysis_DstarFemto/TTrees/vAN-20220424_ROOT6-1/pp_data/681_20220425-1140/merged/,
+                      /mnt/temp/OngoingAnalysis_DstarFemto/TTrees/vAN-20220424_ROOT6-1/pp_data/682_20220425-1140/merged/,
+                      /mnt/temp/OngoingAnalysis_DstarFemto/TTrees/vAN-20220424_ROOT6-1/pp_data/683_20220425-1140/merged/,
+                      /mnt/temp/OngoingAnalysis_DstarFemto/TTrees/vAN-20220424_ROOT6-1/pp_data/684_20220425-1140/merged/]
+    #data: Data__Dstar_DataReduced_20161718_HM_Opti_pT_0_50.parquet.gzip
+    data: Data__Dstar_Data_20161718_HM_Opti_pT_0_50.parquet.gzip
+    treename: null
+
+    #null if you don't want to apply preselections
+    preselections: null 
+    #nsigComb_Pi_0 < 80 and nsigComb_Pi_1 < 80 and nsigComb_Pi_2 < 80 and nsigComb_K_0 < 80 and nsigComb_K_1 < 80 and nsigComb_K_2 < 80 and abs(nsigComb_Pi_0) != 999 and abs(nsigComb_Pi_1) != 999 and abs(nsigComb_Pi_2) != 999 and abs(nsigComb_K_0) != 999 and abs(nsigComb_K_1) != 999 and abs(nsigComb_K_2) != 999
+
+output:
+    leg_labels: # legend labels, keep the right number of classes
+        Bkg: Background
+        Prompt: Prompt D$^{*+}$
+        FD: Feed-down D$^{*+}$
+    out_labels: # output labels, keep the right number of classes
+        Bkg: Bkg
+        Prompt: Prompt
+        FD: FD
+    #dir: [/mnt/temp/OngoingAnalysis_DstarFemto/TTrees/vAN-20220424_ROOT6-1/pp_data/681_20220425-1140/applied_100522_v2_Reduced/,
+    #      /mnt/temp/OngoingAnalysis_DstarFemto/TTrees/vAN-20220424_ROOT6-1/pp_data/682_20220425-1140/applied_100522_v2_Reduced/,
+    #      /mnt/temp/OngoingAnalysis_DstarFemto/TTrees/vAN-20220424_ROOT6-1/pp_data/683_20220425-1140/applied_100522_v2_Reduced/,
+    #      /mnt/temp/OngoingAnalysis_DstarFemto/TTrees/vAN-20220424_ROOT6-1/pp_data/684_20220425-1140/applied_100522_v2_Reduced/]
+    dir: [/mnt/temp/OngoingAnalysis_DstarFemto/TTrees/vAN-20220424_ROOT6-1/pp_data/681_20220425-1140/applied_100522_v2/,
+          /mnt/temp/OngoingAnalysis_DstarFemto/TTrees/vAN-20220424_ROOT6-1/pp_data/682_20220425-1140/applied_100522_v2/,
+          /mnt/temp/OngoingAnalysis_DstarFemto/TTrees/vAN-20220424_ROOT6-1/pp_data/683_20220425-1140/applied_100522_v2/,
+          /mnt/temp/OngoingAnalysis_DstarFemto/TTrees/vAN-20220424_ROOT6-1/pp_data/684_20220425-1140/applied_100522_v2/]
+
+pt_ranges: # ranges in pt to split the data in the ml training and testing
+    min: [1, 2, 4, 6, 8, 12] # list
+    max: [2, 4, 6, 8, 12, 50] # list
+
+data_prep:
+    filt_bkg_mass: inv_mass > .155 # pandas query to select bkg candidates
+    dataset_opt: equal  # change how the dataset is built, options available: 'equal', 'max_signal'
+                        # 'equal' -> same number of prompt/FD/bkg (not using all the signal available)
+                        # 'max_signal' -> try to use all the signal (prompt and FD) + add n_bkg = 2 * (n_prompt + n_FD)
+    bkg_mult: [2., 1., 0.5, 0.3, 0.3, 0.2] # list of multipliers for (nPrompt + nFD) used to determine nCandBkg in the 'max_signal' option
+    max_cand_for_equal: 500000
+    seed_split: 42 # seed used for train_test_split(...)
+    test_fraction: 1.0 # fraction of data used for test set and efficiencies
+
+ml:
+    raw_output: False # use raw_output (True) of probability (False) as output of the model
+    roc_auc_average: 'macro' # 'macro' or 'weighted'
+    roc_auc_approach: 'ovo'  # 'ovo' or 'ovr'
+    training_columns: [ d_len, d_len_xy, norm_dl_xy, cos_p, cos_p_xy, dca, imp_par_xy, max_norm_d0d0exp, imp_par_prod,
+                        nsigComb_Pi_1, nsigComb_K_1, nsigComb_Pi_2, nsigComb_K_2]
+                       # list of training variables
+
+    saved_models: [/home/lvermunt/FemtoAnalysis/ML_Training/Dstar_100522_v2_HypOpt_mlloss/pt1_2/ModelHandler_pT_1_2.pickle,
+                   /home/lvermunt/FemtoAnalysis/ML_Training/Dstar_100522_v2_HypOpt_mlloss/pt2_4/ModelHandler_pT_2_4.pickle,
+                   /home/lvermunt/FemtoAnalysis/ML_Training/Dstar_100522_v2_HypOpt_mlloss/pt4_6/ModelHandler_pT_4_6.pickle,
+                   /home/lvermunt/FemtoAnalysis/ML_Training/Dstar_100522_v2_HypOpt_mlloss/pt6_8/ModelHandler_pT_6_8.pickle,
+                   /home/lvermunt/FemtoAnalysis/ML_Training/Dstar_100522_v2_HypOpt_mlloss/pt8_12/ModelHandler_pT_8_12.pickle,
+                   /home/lvermunt/FemtoAnalysis/ML_Training/Dstar_100522_v2_HypOpt_mlloss/pt12_50/ModelHandler_pT_12_50.pickle
+                  ] # list of saved ModelHandler (path+file), compatible with the pt bins
+
+plots:
+    plotting_columns: [inv_mass, pt_cand, d_len, d_len_xy, norm_dl_xy, cos_p, cos_p_xy, dca, imp_par_xy, max_norm_d0d0exp,
+                       delta_mass_D0, cos_t_star, angle_D0dkpPisoft, imp_par_prod,
+                       nsigComb_Pi_0, nsigComb_K_0, nsigComb_Pi_1, nsigComb_K_1, nsigComb_Pi_2, nsigComb_K_2]
+                       # list of variables to plot
+    train_test_log: True # use log scale for plots of train and test distributions
+  
+appl: 
+    column_to_save_list: ['inv_mass', 'pt_cand'] # list of variables saved in the dataframes with the applied models
+
+standalone_appl:
+    inputs: [] # list of parquet files for the model application
+    output_names: [] # names for the outputs (one for each file)
+    output_dir: null # output directory

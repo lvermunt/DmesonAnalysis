@@ -343,7 +343,7 @@ for iPt, (ptMin, ptMax) in enumerate(zip(ptMins, ptMaxs)):
                 effTimesAccFD = effFD * preselEffFD * acc
                 fPrompt, fFD = GetPromptFDFractionFc(effTimesAccPrompt, effTimesAccFD,
                                                     crossSecPrompt, crossSecFD, RaaPrompt, RaaFD)
-                if len(dfBkgPtSel) == 0:
+                if len(dfBkgPtSel) == 0 or fPrompt[0] == 0:
                     continue
 
                 hMassBkg = TH1F(f'hMassBkg_pT{ptMin}-{ptMax}_cutSet{iSet}', ';#it{M} (GeV/#it{c});Counts', 200,
@@ -359,6 +359,10 @@ for iPt, (ptMin, ptMax) in enumerate(zip(ptMins, ptMaxs)):
                 elif inputCfg['expectedSignalFrom'] == 'feeddown':
                     expSignal = GetExpectedSignal(crossSecFD, ptMax-ptMin, 1., effTimesAccFD,
                                                 fFD[0], 1., 1., nExpEv, sigmaMB, Taa, RaaFD)
+
+                if inputCfg['predictions'].get('highmult', False):
+                    hmscaling = inputCfg['predictions']['highmult']['scaling']
+                    expSignal = expSignal * hmscaling[iPt]
 
                 # expected background
                 bkgConfig = inputCfg['infiles']['background']
@@ -394,12 +398,18 @@ for iPt, (ptMin, ptMax) in enumerate(zip(ptMins, ptMaxs)):
                     errSignif = expSignif * 0.5 * errExpBkg / (expSignal + expBkg)
 
                 # Efficiency
-                EffAccFDError = np.sqrt((effFDUnc/effFD)**2
-                                        + (preselEffFDUnc/preselEffFD)**2
-                                        + (accUnc/acc)**2)*effTimesAccFD
-                EffAccPromptError = np.sqrt((effPromptUnc/effPrompt)**2
-                                            + (preselEffPromptUnc/preselEffPrompt)**2
-                                            + (accUnc/acc)**2)*effTimesAccPrompt
+                if effFD == 0:
+                    EffAccFDError = 0
+                else:
+                    EffAccFDError = np.sqrt((effFDUnc/effFD)**2
+                                            + (preselEffFDUnc/preselEffFD)**2
+                                            + (accUnc/acc)**2)*effTimesAccFD
+                if effPrompt == 0:
+                    EffAccPromptError = 0
+                else:
+                    EffAccPromptError = np.sqrt((effPromptUnc/effPrompt)**2
+                                                + (preselEffPromptUnc/preselEffPrompt)**2
+                                                + (accUnc/acc)**2)*effTimesAccPrompt
 
                 tupleForNtuple = cutSet + (ptMin, ptMax, ParCutMin, ParCutMax, EffAccPromptError, EffAccFDError,
                                            errS, errExpBkg, errSignif, errSoverB, expSignif, expSoverB, expSignal, expBkg,

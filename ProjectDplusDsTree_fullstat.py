@@ -25,6 +25,7 @@ from ROOT import TFile, TH1F, TDatabasePDG # pylint: disable=import-error,no-nam
 from utils.TaskFileLoader import LoadNormObjFromTask, LoadSparseFromTask
 from utils.DfUtils import FilterBitDf, LoadDfFromRootOrParquet
 from utils.AnalysisUtils import MergeHists, ApplySplineFuncToColumn
+from tqdm import tqdm
 
 parser = argparse.ArgumentParser(description='Arguments to pass')
 parser.add_argument('cfgFileName', metavar='text', default='cfgFileName.yml',
@@ -416,12 +417,6 @@ else:
         print('Error: Please run the not-parallel script or provide the correct data foldername! Exit')
         sys.exit()
 
-    arr_df_data = []
-    for filedata in inFileNamesData:
-        df_ = LoadDfFromRootOrParquet(filedata, inputCfg['tree']['dirname'], inputCfg['tree']['treename'])
-        arr_df_data.append(df_)
-    dataFrame = pd.concat(arr_df_data)
-
     #dataFrame = LoadDfFromRootOrParquet(inputCfg['tree']['filenameAll'], inputCfg['tree']['dirname'],
     #                                    inputCfg['tree']['treename'])
 
@@ -429,13 +424,16 @@ else:
         print(f'Projecting distributions for {ptMin:.1f} < pT < {ptMax:.1f} GeV/c')
         ptLowLabel = ptMin * 10
         ptHighLabel = ptMax * 10
-        dataFrameSel = dataFrame.astype(float).query(cuts)
         hPt = TH1F(f'hPt_{ptLowLabel:.0f}_{ptHighLabel:.0f}', '', nPtBins, ptLimLow, ptLimHigh)
         hInvMass = TH1F(f'hMass_{ptLowLabel:.0f}_{ptHighLabel:.0f}', '', massBins, massLimLow, massLimHigh)
-        for pt in dataFrameSel['pt_cand'].to_numpy():
-            hPt.Fill(pt)
-        for mass in dataFrameSel['inv_mass'].to_numpy():
-            hInvMass.Fill(mass)
+
+        for filedata in tqdm(inFileNamesData):
+            dataFrame = LoadDfFromRootOrParquet(filedata, inputCfg['tree']['dirname'], inputCfg['tree']['treename'])
+            dataFrameSel = dataFrame.astype(float).query(cuts)
+            for pt in dataFrameSel['pt_cand'].to_numpy():
+                hPt.Fill(pt)
+            for mass in dataFrameSel['inv_mass'].to_numpy():
+                hInvMass.Fill(mass)
         allDict['InvMass'].append(hInvMass)
         allDict['Pt'].append(hPt)
         outFile.cd()

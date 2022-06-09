@@ -43,6 +43,19 @@ def extract_topo_distr_dstar(PtBin, OutPutDirPt, vars_to_plot, PromptDf, FDDf, B
     hpr_dca = TH1F("hpr_dca", ";DCA#kern[0.1]{ } (cm);Normalised counts", nbins, 0, 0.4)
     hfd_dca = TH1F("hfd_dca", ";DCA#kern[0.1]{ } (cm);Normalised counts", nbins, 0, 0.4)
 
+    hbkg_ncombpi1 = TH1F("hbkg_ncombpi1", ";#it{N}_{sig}^{comb}(#pi pr1) (#sigma);Normalised counts", nbins, 0, 30)
+    hpr_ncombpi1 = TH1F("hpr_ncombpi1", ";#it{N}_{sig}^{comb}(#pi pr1) (#sigma);Normalised counts", nbins, 0, 30)
+    hfd_ncombpi1 = TH1F("hfd_ncombpi1", ";#it{N}_{sig}^{comb}(#pi pr1) (#sigma);Normalised counts", nbins, 0, 30)
+    hbkg_ncombk1 = TH1F("hbkg_ncombk1", ";#it{N}_{sig}^{comb}(K pr1) (#sigma);Normalised counts", nbins, 0, 30)
+    hpr_ncombk1 = TH1F("hpr_ncombk1", ";#it{N}_{sig}^{comb}(K pr1) (#sigma);Normalised counts", nbins, 0, 30)
+    hfd_ncombk1 = TH1F("hfd_ncombk1", ";#it{N}_{sig}^{comb}(K pr1) (#sigma);Normalised counts", nbins, 0, 30)
+    hbkg_ncombpi2 = TH1F("hbkg_ncombpi2", ";#it{N}_{sig}^{comb}(#pi pr2) (#sigma);Normalised counts", nbins, 0, 30)
+    hpr_ncombpi2 = TH1F("hpr_ncombpi2", ";#it{N}_{sig}^{comb}(#pi pr2) (#sigma);Normalised counts", nbins, 0, 30)
+    hfd_ncombpi2 = TH1F("hfd_ncombpi2", ";#it{N}_{sig}^{comb}(#pi pr2) (#sigma);Normalised counts", nbins, 0, 30)
+    hbkg_ncombk2 = TH1F("hbkg_ncombk2", ";#it{N}_{sig}^{comb}(K pr2) (#sigma);Normalised counts", nbins, 0, 30)
+    hpr_ncombk2 = TH1F("hpr_ncombk2", ";#it{N}_{sig}^{comb}(K pr2) (#sigma);Normalised counts", nbins, 0, 30)
+    hfd_ncombk2 = TH1F("hfd_ncombk2", ";#it{N}_{sig}^{comb}(K pr2) (#sigma);Normalised counts", nbins, 0, 30)
+
     if BkgDf is not None:
         if 'd_len' in BkgDf.columns:
             BkgDf["d_len"] = BkgDf["d_len"].multiply(10000)
@@ -80,6 +93,15 @@ def extract_topo_distr_dstar(PtBin, OutPutDirPt, vars_to_plot, PromptDf, FDDf, B
             fill_hist(hbkg_max_norm_d0d0exp, BkgDf.max_norm_d0d0exp)
         if 'imp_par_prod' in BkgDf.columns:
             fill_hist(hbkg_imp_par_prod, BkgDf.imp_par_prod)
+
+        if 'nsigComb_Pi_1' in BkgDf.columns:
+            fill_hist(hbkg_ncombpi1, BkgDf.nsigComb_Pi_1)
+        if 'nsigComb_K_1' in BkgDf.columns:
+            fill_hist(hbkg_ncombk1, BkgDf.nsigComb_K_1)
+        if 'nsigComb_Pi_2' in BkgDf.columns:
+            fill_hist(hbkg_ncombpi2, BkgDf.nsigComb_Pi_2)
+        if 'nsigComb_K_2' in BkgDf.columns:
+            fill_hist(hbkg_ncombk2, BkgDf.nsigComb_K_2)
 
         print("Entries (bkg):", hbkg_d_len.GetEntries())
         
@@ -121,6 +143,15 @@ def extract_topo_distr_dstar(PtBin, OutPutDirPt, vars_to_plot, PromptDf, FDDf, B
         if 'imp_par_prod' in PromptDf.columns:
             fill_hist(hpr_imp_par_prod, PromptDf.imp_par_prod)
 
+        if 'nsigComb_Pi_1' in PromptDf.columns:
+            fill_hist(hpr_ncombpi1, PromptDf.nsigComb_Pi_1)
+        if 'nsigComb_K_1' in PromptDf.columns:
+            fill_hist(hpr_ncombk1, PromptDf.nsigComb_K_1)
+        if 'nsigComb_Pi_2' in PromptDf.columns:
+            fill_hist(hpr_ncombpi2, PromptDf.nsigComb_Pi_2)
+        if 'nsigComb_K_2' in PromptDf.columns:
+            fill_hist(hpr_ncombk2, PromptDf.nsigComb_K_2)
+
         print("Entries (prompt):", hpr_d_len.GetEntries())
 
     if FDDf is not None:
@@ -160,6 +191,15 @@ def extract_topo_distr_dstar(PtBin, OutPutDirPt, vars_to_plot, PromptDf, FDDf, B
             fill_hist(hfd_max_norm_d0d0exp, FDDf.max_norm_d0d0exp)
         if 'imp_par_prod' in FDDf.columns:
             fill_hist(hfd_imp_par_prod, FDDf.imp_par_prod)
+
+        if 'nsigComb_Pi_1' in FDDf.columns:
+            fill_hist(hfd_ncombpi1, FDDf.nsigComb_Pi_1)
+        if 'nsigComb_K_1' in FDDf.columns:
+            fill_hist(hfd_ncombk1, FDDf.nsigComb_K_1)
+        if 'nsigComb_Pi_2' in FDDf.columns:
+            fill_hist(hfd_ncombpi2, FDDf.nsigComb_Pi_2)
+        if 'nsigComb_K_2' in FDDf.columns:
+            fill_hist(hfd_ncombk2, FDDf.nsigComb_K_2)
 
         print("Entries (feed-down):", hfd_d_len.GetEntries())
 
@@ -231,6 +271,31 @@ def extract_topo_distr_dstar(PtBin, OutPutDirPt, vars_to_plot, PromptDf, FDDf, B
         hpr_dca.Write()
     if 'dca' in vars_to_plot:
         hfd_dca.Write()
+
+    if 'nsigComb_Pi_1' in vars_to_plot:
+        hbkg_ncombpi1.Write()
+    if 'nsigComb_Pi_1' in vars_to_plot:
+        hpr_ncombpi1.Write()
+    if 'nsigComb_Pi_1' in vars_to_plot:
+        hfd_ncombpi1.Write()
+    if 'nsigComb_K_1' in vars_to_plot:
+        hbkg_ncombk1.Write()
+    if 'nsigComb_K_1' in vars_to_plot:
+        hpr_ncombk1.Write()
+    if 'nsigComb_K_1' in vars_to_plot:
+        hfd_ncombk1.Write()
+    if 'nsigComb_Pi_2' in vars_to_plot:
+        hbkg_ncombpi2.Write()
+    if 'nsigComb_Pi_2' in vars_to_plot:
+        hpr_ncombpi2.Write()
+    if 'nsigComb_Pi_2' in vars_to_plot:
+        hfd_ncombpi2.Write()
+    if 'nsigComb_K_2' in vars_to_plot:
+        hbkg_ncombk2.Write()
+    if 'nsigComb_K_2' in vars_to_plot:
+        hpr_ncombk2.Write()
+    if 'nsigComb_K_2' in vars_to_plot:
+        hfd_ncombk2.Write()
 
     out_file.Close()
 

@@ -1,0 +1,53 @@
+isMC: no
+filename: [/data/TTree/DstarFemto/vAN-20211121_ROOT6-1/pp_cern.ch/652_20211123-1056/unmerged/child_22/AnalysisResults.root,
+           /data/TTree/DstarFemto/vAN-20211121_ROOT6-1/pp_cern.ch/652_20211123-1056/unmerged/child_23/AnalysisResults.root,
+           /data/TTree/DstarFemto/vAN-20211121_ROOT6-1/pp_cern.ch/652_20211123-1056/unmerged/child_24/AnalysisResults.root,
+           /data/TTree/DstarFemto/vAN-20211121_ROOT6-1/pp_cern.ch/652_20211123-1056/unmerged/child_25/AnalysisResults.root,
+           /data/TTree/DstarFemto/vAN-20211121_ROOT6-1/pp_cern.ch/652_20211123-1056/unmerged/child_26/AnalysisResults.root,
+           /data/TTree/DstarFemto/vAN-20211121_ROOT6-1/pp_cern.ch/652_20211123-1056/unmerged/child_27/AnalysisResults.root,
+           /data/TTree/DstarFemto/vAN-20211121_ROOT6-1/pp_cern.ch/652_20211123-1056/unmerged/child_28/AnalysisResults.root,
+           /data/TTree/DstarFemto/vAN-20211121_ROOT6-1/pp_cern.ch/652_20211123-1056/unmerged/child_29/AnalysisResults.root,
+           /data/TTree/DstarFemto/vAN-20211121_ROOT6-1/pp_cern.ch/652_20211123-1056/unmerged/child_30/AnalysisResults.root,
+           /data/TTree/DstarFemto/vAN-20211121_ROOT6-1/pp_cern.ch/652_20211123-1056/unmerged/child_31/AnalysisResults.root,
+           /data/TTree/DstarFemto/vAN-20211121_ROOT6-1/pp_cern.ch/652_20211123-1056/unmerged/child_32/AnalysisResults.root,
+           /data/TTree/DstarFemto/vAN-20211121_ROOT6-1/pp_cern.ch/652_20211123-1056/unmerged/child_33/AnalysisResults.root,
+           /data/TTree/DstarFemto/vAN-20211121_ROOT6-1/pp_cern.ch/652_20211123-1056/unmerged/child_34/AnalysisResults.root,
+           /data/TTree/DstarFemto/vAN-20211121_ROOT6-1/pp_cern.ch/652_20211123-1056/unmerged/child_35/AnalysisResults.root
+          ]
+dirname: PWGHF_D2H_TreeDstartoD0piLoose_HM_Pola
+listname: coutputTreeDstartoD0piLoose_HM_Pola
+sparsenameAll: fnSparse
+enableRef: no #always no for data
+enableSecPeak: no #always no for data
+normname: NormalizationCounter
+histoevname: hNEvents
+
+#info for trees (files can be different if trees are filtered or with applied ML models)
+tree:
+    particle: Dstar #needed to define binning for invariant-mass histo
+    filenameAll: [/data/TTree/DstarFemto/vAN-20211121_ROOT6-1/pp_cern.ch/652_20211123-1056/applied_HM_Pola/merged/Data_pT_3_4_ModelApplied.parquet.gzip,
+                  /data/TTree/DstarFemto/vAN-20211121_ROOT6-1/pp_cern.ch/652_20211123-1056/applied_HM_Pola/merged/Data_pT_4_5_ModelApplied.parquet.gzip,
+                  /data/TTree/DstarFemto/vAN-20211121_ROOT6-1/pp_cern.ch/652_20211123-1056/applied_HM_Pola/merged/Data_pT_5_6_ModelApplied.parquet.gzip,
+                  /data/TTree/DstarFemto/vAN-20211121_ROOT6-1/pp_cern.ch/652_20211123-1056/applied_HM_Pola/merged/Data_pT_6_7_ModelApplied.parquet.gzip,
+                  /data/TTree/DstarFemto/vAN-20211121_ROOT6-1/pp_cern.ch/652_20211123-1056/applied_HM_Pola/merged/Data_pT_7_12_ModelApplied.parquet.gzip,
+                  /data/TTree/DstarFemto/vAN-20211121_ROOT6-1/pp_cern.ch/652_20211123-1056/applied_HM_Pola/merged/Data_pT_12_50_ModelApplied.parquet.gzip
+                 ]
+    dirname: null
+    treename: null
+    #filenameAll: [/data/TTree/DstarFemto/vAN-20211121_ROOT6-1/pp_cern.ch/652_20211123-1056/unmerged/child_22/Data__Dstar_Data_20161718_HM_Pola_vall_pT_0_50.parquet.gzip,
+    #              /data/TTree/DstarFemto/vAN-20211121_ROOT6-1/pp_cern.ch/652_20211123-1056/unmerged/child_23/Data__Dstar_Data_20161718_HM_Pola_vall_pT_0_50.parquet.gzip,
+    #              /data/TTree/DstarFemto/vAN-20211121_ROOT6-1/pp_cern.ch/652_20211123-1056/unmerged/child_24/Data__Dstar_Data_20161718_HM_Pola_vall_pT_0_50.parquet.gzip,
+    #              /data/TTree/DstarFemto/vAN-20211121_ROOT6-1/pp_cern.ch/652_20211123-1056/unmerged/child_25/Data__Dstar_Data_20161718_HM_Pola_vall_pT_0_50.parquet.gzip,
+    #              /data/TTree/DstarFemto/vAN-20211121_ROOT6-1/pp_cern.ch/652_20211123-1056/unmerged/child_26/Data__Dstar_Data_20161718_HM_Pola_vall_pT_0_50.parquet.gzip,
+    #              /data/TTree/DstarFemto/vAN-20211121_ROOT6-1/pp_cern.ch/652_20211123-1056/unmerged/child_27/Data__Dstar_Data_20161718_HM_Pola_vall_pT_0_50.parquet.gzip,
+    #              /data/TTree/DstarFemto/vAN-20211121_ROOT6-1/pp_cern.ch/652_20211123-1056/unmerged/child_28/Data__Dstar_Data_20161718_HM_Pola_vall_pT_0_50.parquet.gzip,
+    #              /data/TTree/DstarFemto/vAN-20211121_ROOT6-1/pp_cern.ch/652_20211123-1056/unmerged/child_29/Data__Dstar_Data_20161718_HM_Pola_vall_pT_0_50.parquet.gzip,
+    #              /data/TTree/DstarFemto/vAN-20211121_ROOT6-1/pp_cern.ch/652_20211123-1056/unmerged/child_30/Data__Dstar_Data_20161718_HM_Pola_vall_pT_0_50.parquet.gzip,
+    #              /data/TTree/DstarFemto/vAN-20211121_ROOT6-1/pp_cern.ch/652_20211123-1056/unmerged/child_31/Data__Dstar_Data_20161718_HM_Pola_vall_pT_0_50.parquet.gzip,
+    #              /data/TTree/DstarFemto/vAN-20211121_ROOT6-1/pp_cern.ch/652_20211123-1056/unmerged/child_32/Data__Dstar_Data_20161718_HM_Pola_vall_pT_0_50.parquet.gzip,
+    #              /data/TTree/DstarFemto/vAN-20211121_ROOT6-1/pp_cern.ch/652_20211123-1056/unmerged/child_33/Data__Dstar_Data_20161718_HM_Pola_vall_pT_0_50.parquet.gzip,
+    #              /data/TTree/DstarFemto/vAN-20211121_ROOT6-1/pp_cern.ch/652_20211123-1056/unmerged/child_34/Data__Dstar_Data_20161718_HM_Pola_vall_pT_0_50.parquet.gzip,
+    #              /data/TTree/DstarFemto/vAN-20211121_ROOT6-1/pp_cern.ch/652_20211123-1056/unmerged/child_35/Data__Dstar_Data_20161718_HM_Pola_vall_pT_0_50.parquet.gzip
+    #             ]
+    #dirname: PWGHF_D2H_TreeDstartoD0piLoose_HM_Pola
+    #treename: treeMLD

@@ -2,11 +2,11 @@ channel: Dstar # options [Ds, Dplus, Dstar, LctopKpi, LctopK0s, LctopiL]
 
 infile:
     isMC: 1
-    #filename: [/data/TTree/DstarFemto/vAN-20211121_ROOT6-1/pp_cern.ch/654_20211125-1053/merged/AnalysisResults.root]
-    #foldername: /data/TTree/DstarFemto/vAN-20211121_ROOT6-1/pp_cern.ch/654_20211125-1053/unmerged/
+    #filename: [/data/TTree/DstarFemto/vAN-20211121_ROOT6-1/pp_cern.ch/656_20211125-1054/merged/AnalysisResults.root]
+    #foldername: /data/TTree/DstarFemto/vAN-20211121_ROOT6-1/pp_cern.ch/656_20211125-1054/unmerged/
     #dirname: PWGHF_D2H_TreeDstartoD0piLoose_HM_Pola
-    filename: [/data/TTree/DstarFemto/vAN-20211215_ROOT6-1/pp_sim/662_20211216-1321/merged/AnalysisResults.root]
-    foldername: /data/TTree/DstarFemto/vAN-20211215_ROOT6-1/pp_sim/662_20211216-1321/merged/
+    filename: [/mnt/temp/OngoingAnalysis_DstarFemto/TTrees/vAN-20220424_ROOT6-1/pp_sim/687_20220425-1152/merged/AnalysisResults.root]
+    foldername: /mnt/temp/OngoingAnalysis_DstarFemto/TTrees/vAN-20220424_ROOT6-1/pp_sim/687_20220425-1152/merged/
     dirname: PWGHF_D2H_TreeDstartoD0piLoose_HM_Opti
     treename: treeMLD
     listname: coutputTreeDstartoD0piLoose_HM_Opti
@@ -14,9 +14,9 @@ infile:
     sparsenamefd: fnSparseAcc_fromB
 
 outfile:
-    #dirpath: '/data/TTree/DstarFemto/vAN-20211121_ROOT6-1/pp_cern.ch/654_20211125-1053/merged/'
-    #suffix: __Dstar_MC_20161718_HM_Pola_vall
-    dirpath: '/data/TTree/DstarFemto/vAN-20211215_ROOT6-1/pp_sim/662_20211216-1321/merged/'
+    #dirpath: '/data/TTree/DstarFemto/vAN-20211121_ROOT6-1/pp_cern.ch/656_20211125-1054/merged/'
+    #suffix: __Dstar_MC_20161718_HM_Pola_vDistrTest
+    dirpath: '/mnt/temp/OngoingAnalysis_DstarFemto/TTrees/vAN-20220424_ROOT6-1/pp_sim/687_20220425-1152/merged/'
     suffix: __Dstar_MC_20161718_HM_Opti
     treename: treeMLD
     
@@ -24,10 +24,11 @@ skimming:
     pt:
         min: 0
         max: 50
-    analysisptbins: [1, 2, 4, 6, 8, 12, 50]
+    #analysisptbins: [1, 2, 4, 6, 8, 12, 50]
+    analysisptbins: [ 1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6, 2.8, 3.0, 3.2, 3.4, 3.6, 3.8, 4.0, 4.2, 4.4, 4.6, 4.8, 5.0, 5.2, 5.4, 5.6, 5.8, 6.0, 6.2, 6.4, 6.6, 6.8, 7.0, 7.2, 7.4, 7.6, 7.8, 8.0, 8.2, 8.4, 8.6, 8.8, 9.0, 9.2, 9.4, 9.6, 9.8,  10.0, 10.2, 10.4, 10.6, 10.8, 11.0, 11.2, 11.4, 11.6, 11.8, 12.0, 50.0]
     preselections: null
     #preselections: nsigComb_Pi_0 < 25 and nsigComb_Pi_1 < 50 and nsigComb_Pi_2 < 80 and nsigComb_K_0 < 35 and nsigComb_K_1 < 40 and nsigComb_K_2 < 35  #null if you don't want to apply preselections
-    colstokeep: [inv_mass, pt_cand, d_len, d_len_xy, norm_dl_xy, cos_p, cos_p_xy, dca, imp_par_xy,  max_norm_d0d0exp, nsigComb_Pi_0, nsigComb_K_0, nsigComb_Pi_1, nsigComb_K_1, nsigComb_Pi_2, nsigComb_K_2, nsigTPC_Pi_0, nsigTPC_K_0, nsigTPC_Pi_1, nsigTPC_K_1, nsigTPC_Pi_2, nsigTPC_K_2, nsigTOF_Pi_0, nsigTOF_K_0, nsigTOF_Pi_1, nsigTOF_K_1, nsigTOF_Pi_2, nsigTOF_K_2, delta_mass_D0, angle_D0dkpPisoft, cos_t_star, imp_par_prod, pt_prong0, pt_prong1, pt_prong2] #empty list if you want to keep everything
+    colstokeep: [inv_mass, pt_cand, d_len, d_len_xy, norm_dl_xy, cos_p, cos_p_xy, dca, imp_par_xy,  max_norm_d0d0exp, nsigComb_Pi_0, nsigComb_K_0, nsigComb_Pi_1, nsigComb_K_1, nsigComb_Pi_2, nsigComb_K_2, delta_mass_D0, angle_D0dkpPisoft, cos_t_star, imp_par_prod, pt_prong0, pt_prong1, pt_prong2] #empty list if you want to keep everything
 
 singletrackvars:
     addAODfiltervars: 0 # it adds min pt and min d0 of daughters with pt < 2

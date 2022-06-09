@@ -62,8 +62,10 @@ def data_prep(inputCfg, iBin, PtBin, OutPutDirPt, PromptDf, FDDf, BkgDf): #pylin
             hfd.Write()
     myfile_nsigpt.Close()
     #__________________________________________________
-    topovars_dstar = ['d_len', 'd_len_xy', 'norm_dl_xy', 'cos_p', 'cos_p_xy', 'dca', 'imp_par_xy', 'max_norm_d0d0exp', 'delta_mass_D0', 'cos_t_star']
-    extract_topo_distr_dstar(PtBin, OutPutDirPt, topovars_dstar, PromptDf, FDDf, BkgDf)
+    #The multiplication screws up the training
+    #ONLY ENABLE WHEN YOU WANT THE PLOTS
+    #topovars_dstar = ['d_len', 'd_len_xy', 'norm_dl_xy', 'cos_p', 'cos_p_xy', 'dca', 'imp_par_xy', 'max_norm_d0d0exp', 'delta_mass_D0', 'cos_t_star']
+    #extract_topo_distr_dstar(PtBin, OutPutDirPt, topovars_dstar, PromptDf, FDDf, BkgDf)
     #__________________________________________________
     myfile_varcorr = TFile.Open(f'{OutPutDirPt}/varcorrs_{PtBin[0]}_{PtBin[1]}.root', 'RECREATE')
     myfile_varcorr.cd()

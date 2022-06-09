@@ -1,0 +1,32 @@
+isMC: no
+filename: [/mnt/temp/OngoingAnalysis_DstarFemto/TTrees/vAN-20220424_ROOT6-1/pp_data/681_20220425-1140/merged/child_1/pack_0/AnalysisResults.root,
+           /mnt/temp/OngoingAnalysis_DstarFemto/TTrees/vAN-20220424_ROOT6-1/pp_data/684_20220425-1140/merged/child_9/pack_9/AnalysisResults.root]
+dirname: PWGHF_D2H_TreeDstartoD0piLoose_HM_Opti
+listname: coutputTreeDstartoD0piLoose_HM_Opti
+sparsenameAll: fnSparse
+enableRef: no #always no for data
+enableSecPeak: no #always no for data
+normname: NormalizationCounter
+histoevname: hNEvents
+
+#info for trees (files can be different if trees are filtered or with applied ML models)
+tree:
+    particle: Dstar #needed to define binning for invariant-mass histo
+    #prompt_foldername: /mnt/temp/OngoingAnalysis_DstarFemto/TTrees/vAN-20220424_ROOT6-1/pp_sim/687_20220425-1152/merged/
+    #filenamePrompt: Prompt__Dstar_MC_20161718_HM_Opti_pT_0_50.parquet.gzip
+    #FD_foldername: /mnt/temp/OngoingAnalysis_DstarFemto/TTrees/vAN-20220424_ROOT6-1/pp_sim/687_20220425-1152/merged/
+    #filenameFD: FD__Dstar_MC_20161718_HM_Opti_pT_0_50.parquet.gzip
+    data_foldername: [/mnt/temp/OngoingAnalysis_DstarFemto/TTrees/vAN-20220424_ROOT6-1/pp_data/681_20220425-1140/applied_030622_v1/,
+                      /mnt/temp/OngoingAnalysis_DstarFemto/TTrees/vAN-20220424_ROOT6-1/pp_data/682_20220425-1140/applied_030622_v1/,
+                      /mnt/temp/OngoingAnalysis_DstarFemto/TTrees/vAN-20220424_ROOT6-1/pp_data/683_20220425-1140/applied_030622_v1/,
+                      /mnt/temp/OngoingAnalysis_DstarFemto/TTrees/vAN-20220424_ROOT6-1/pp_data/684_20220425-1140/applied_030622_v1/]
+    #data: Data_pT_1_2_ModelApplied.parquet.gzip
+    data: [Data_pT_1_2_ModelApplied.parquet.gzip,
+           Data_pT_2_4_ModelApplied.parquet.gzip,
+           Data_pT_4_6_ModelApplied.parquet.gzip,
+           Data_pT_6_8_ModelApplied.parquet.gzip,
+           Data_pT_8_12_ModelApplied.parquet.gzip,
+           Data_pT_12_50_ModelApplied.parquet.gzip]
+    dirname: null
+    treename: null
+

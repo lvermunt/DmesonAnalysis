@@ -336,6 +336,7 @@ for iCanv in range(nCanvases):
     DivideCanvas(cResiduals[iCanv], nPads)
 
 massFitter = []
+failedFit = []
 for iPt, (hM, ptMin, ptMax, reb, sgnEnum, bkgEnum, secPeak, massMin, massMax) in enumerate(
         zip(hMass, ptMins, ptMaxs, fitConfig[cent]['Rebin'], SgnFunc, BkgFunc, inclSecPeak, fitConfig[cent]['MassMin'],
             fitConfig[cent]['MassMax'])):
@@ -380,7 +381,10 @@ for iPt, (hM, ptMin, ptMax, reb, sgnEnum, bkgEnum, secPeak, massMin, massMax) in
             parFrac2Gaus = 4
             if not (secPeak and particleName == 'Ds'):
                 massFunc = TF1(f'massFunc{iPt}', DoubleGaus, massMin, massMax, 5)
-                massFunc.SetParameters(hMassForFit[iPt].Integral() * binWidth, massForFit, 0.010, 0.030, 0.9)
+                if not particleName == 'Dstar':
+                    massFunc.SetParameters(hMassForFit[iPt].Integral() * binWidth, massForFit, 0.010, 0.030, 0.9)
+                else:
+                    massFunc.SetParameters(hMassForFit[iPt].Integral() * binWidth, massForFit, 0.0010, 0.0030, 0.9)
             else:
                 massFunc = TF1(f'massFunc{iPt}', DoublePeakDoubleGaus, massMin, massMax, 8)
                 massFunc.SetParameters(hMassForFit[iPt].Integral() * binWidth, massForFit, 0.010, 0.030, 0.9,
@@ -513,7 +517,11 @@ for iPt, (hM, ptMin, ptMax, reb, sgnEnum, bkgEnum, secPeak, massMin, massMax) in
             )
             massFitter[iPt].SetFixReflOverS(rOverS)
             massFitter[iPt].SetTemplateReflections(hRel[iPt], "2gaus", massMin, massMax);
-        massFitter[iPt].MassFitter(False)
+        suc = massFitter[iPt].MassFitter(False)
+        if not suc:
+            failedFit.append(True)
+            continue
+        failedFit.append(False)
 
         rawyield = massFitter[iPt].GetRawYield()
         rawyielderr = massFitter[iPt].GetRawYieldError()
@@ -538,8 +546,9 @@ for iPt, (hM, ptMin, ptMax, reb, sgnEnum, bkgEnum, secPeak, massMin, massMax) in
         hRawYieldsSignificance.SetBinContent(iPt+1, signif.value)
         hRawYieldsSignificance.SetBinError(iPt+1, signiferr.value)
         hRawYieldsSoverB.SetBinContent(iPt+1, sgn.value/bkg.value)
-        hRawYieldsSoverB.SetBinError(iPt+1, sgn.value/bkg.value*np.sqrt(
-            sgnerr.value**2/sgn.value**2+bkgerr.value**2/bkg.value**2))
+        if sgn.value != 0:
+            hRawYieldsSoverB.SetBinError(iPt+1, sgn.value/bkg.value*np.sqrt(
+                sgnerr.value**2/sgn.value**2+bkgerr.value**2/bkg.value**2))
         hRawYieldsSignal.SetBinContent(iPt+1, sgn.value)
         hRawYieldsSignal.SetBinError(iPt+1, sgnerr.value)
         hRawYieldsBkg.SetBinContent(iPt+1, bkg.value)
@@ -557,10 +566,11 @@ for iPt, (hM, ptMin, ptMax, reb, sgnEnum, bkgEnum, secPeak, massMin, massMax) in
             hRawYieldsBkgDiffSigma[iS].SetBinContent(iPt+1,bkg.value)
             hRawYieldsBkgDiffSigma[iS].SetBinError(iPt+1,bkgerr.value)
             hRawYieldsSoverBDiffSigma[iS].SetBinContent(iPt+1,sgn.value/bkg.value)
-            hRawYieldsSoverBDiffSigma[iS].SetBinError(
-                iPt+1,
-                sgn.value/bkg.value*np.sqrt(sgnerr.value**2/sgn.value**2+bkgerr.value**2/bkg.value**2)
-            )
+            if sgn.value != 0:
+                hRawYieldsSoverBDiffSigma[iS].SetBinError(
+                     iPt+1,
+                     sgn.value/bkg.value*np.sqrt(sgnerr.value**2/sgn.value**2+bkgerr.value**2/bkg.value**2)
+                )
             hRawYieldsSignifDiffSigma[iS].SetBinContent(iPt+1,signif.value)
             hRawYieldsSignifDiffSigma[iS].SetBinError(iPt+1,signiferr.value)
         
@@ -657,7 +667,9 @@ if not args.isMC:
         canv.Write()
 for hist in hMass:
     hist.Write()
-for fitter, ptLow, ptHigh in zip(massFitter, ptMins, ptMaxs):
+for failFit, fitter, ptLow, ptHigh in zip(failedFit, massFitter, ptMins, ptMaxs):
+    if failFit:
+        continue
     fitter.GetMassFunc().SetName(f'fTot_{ptLow}_{ptHigh}')
     fitter.GetSignalFunc().SetName(f'fSgn_{ptLow}_{ptHigh}')
     fitter.GetBackgroundRecalcFunc().SetName(f'fBkg_{ptLow}_{ptHigh}')
