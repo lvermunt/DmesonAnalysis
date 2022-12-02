@@ -1,6 +1,6 @@
 #!/bin/bash
 #steps to be performed
-DoDataProjection=false
+DoDataProjection=true
 DoMCProjection=true
 DoDataRawYields=true
 DoMCRawYields=false
@@ -16,29 +16,29 @@ ProjectTree=false
 
 #PARAMETERS TO BE SET (use "" for parameters not needed)
 ################################################################################################
-Particle="Dplus" # whether it is Dplus,  Ds or Lc analysis
+Particle="Dstar" # whether it is Dplus,  Ds or Lc analysis
 Cent="kpp13TeVFD" # used also to asses prompt or non-prompt and system
 
-cfgFileData="../analyses/np_Dplus_vsmult_pp13TeV/configfiles/inputs/config_Dplus_pp13TeV_data_MB_multWeights.yml"
-cfgFileMC="../analyses/np_Dplus_vsmult_pp13TeV/configfiles/inputs/config_Dplus_pp13TeV_MC_MB_multWeights.yml"
-cfgFileFit="../analyses/np_Dplus_vsmult_pp13TeV/configfiles//fit/config_fit_Dplus_13TeV.yml"
+cfgFileData="configfiles/config_Dstar_data_HM_Opti0306_sparse.yml"
+cfgFileMC="configfiles/config_Dstar_MC_HM_Opti0306_sparse.yml"
+cfgFileFit="configfiles/fit/config_Dstar_Fit_HM_Opti0306_small.yml"
 
-accFileName="accfiles/Acceptance_Toy_DplusKpipi_yfidPtDep_etaDau09_ptDau100_promptDplusFONLL13ptshape_FONLLy.root"
+accFileName="accfiles/Acceptance_Toy_DStarD0pi_yfidPtDep_etaDau09_ptDau100_promptDstarFONLL13ptshape_FONLLy.root"
 predFileName="models/fonll/feeddown/DmesonLcPredictions_13TeV_y05_FFee_BRpythia8_SepContr_PDG2020.root"
-pprefFileName="" #"ppreference/Ds_ppreference_pp5TeV_noyshift_pt_2_3_4_6_8_12_16_24_36_50.root"
+pprefFileName=""
 
 PtWeightsDFileName=""
 PtWeightsDHistoName=""
 PtWeightsBFileName=""
 PtWeightsBHistoName=""
 
-MultWeightsFileName="systematics/genmultdistr/multweights/MultWeights_pp13TeV_MB_030_fnonprompt.root"
-MultWeightsHistoName="hNtrklWeightsCandInMass"
+MultWeightsFileName=""
+MultWeightsHistoName=""
 
 DataDrivenFractionFileName=""
 
 #assuming cutsets config files starting with "cutset" and are .yml
-CutSetsDir="../analyses/np_Dplus_vsmult_pp13TeV/configfiles/cutsets/datadriven/030"
+CutSetsDir="configfiles/cutsets/Dstar/pp/CutVar_Opti0306_small/"
 declare -a CutSets=()
 for filename in ${CutSetsDir}/*.yml; do
     tmp_name="$(basename -- ${filename} .yml)"
@@ -47,13 +47,13 @@ for filename in ${CutSetsDir}/*.yml; do
 done
 arraylength=${#CutSets[@]}
 
-OutDirRawyields="../analyses/np_Dplus_vsmult_pp13TeV/outputs/rawyields/030/"
-OutDirEfficiency="../analyses/np_Dplus_vsmult_pp13TeV/outputs/efficiencies/030/"
+OutDirRawyields="../Analysis_output/HM_Opti0306_v161022/CutVar_Opti0306_small/"
+OutDirEfficiency="../Analysis_output/HM_Opti0306_v161022/CutVar_Opti0306_small/"
 OutDirCrossSec=""
 OutDirRaa=""
 ################################################################################################
 
-if [ ${Particle} != "Dplus" ] && [ ${Particle} != "D0" ]&& [ ${Particle} != "Ds" ] && [ ${Particle} != "Lc" ]; then
+if [ ${Particle} != "Dplus" ] && [ ${Particle} != "D0" ]&& [ ${Particle} != "Ds" ] && [ ${Particle} != "Lc" ] && [ ${Particle} != "Dstar" ]; then
   echo $(tput setaf 1) ERROR: only Ds and Dplus mesons are supported! $(tput sgr0)
   exit 2
 fi
@@ -195,8 +195,12 @@ if $DoMCRawYields; then
   for (( iCutSet=0; iCutSet<${arraylength}; iCutSet++ ));
   do
     echo $(tput setaf 4) Extract raw yields from ${OutDirEfficiency}/Distr_${Particle}_MC${CutSets[$iCutSet]}.root $(tput sgr0)
-    echo '.x GetRawYieldsDplusDs.C+('${Cent}',true, "'${OutDirEfficiency}'/Distr_'${Particle}'_MC'${CutSets[$iCutSet]}'.root", "'${cfgFileFit}'", "'${OutDirRawyields}'/RawYields'${Meson}'_MC'${CutSets[$iCutSet]}'.root")' | root -l -b
-    echo '.q'
+    if [ ${Particle} == "Dstar" ]; then
+      python3 GetRawYieldsDplusDs.py ${cfgFileFit} ${Cent} ${OutDirEfficiency}/Distr_${Particle}_MC${CutSets[$iCutSet]}.root ${OutDirRawyields}/RawYields${Meson}_MC${CutSets[$iCutSet]}.root --isMC --batch
+    else
+      echo '.x GetRawYieldsDplusDs.C+('${Cent}',true, "'${OutDirEfficiency}'/Distr_'${Particle}'_MC'${CutSets[$iCutSet]}'.root", "'${cfgFileFit}'", "'${OutDirRawyields}'/RawYields'${Meson}'_MC'${CutSets[$iCutSet]}'.root")' | root -l -b
+      echo '.q'
+    fi
   done
 fi
 
@@ -204,7 +208,9 @@ if $DoDataRawYields; then
   for (( iCutSet=0; iCutSet<${arraylength}; iCutSet++ ));
   do
     echo $(tput setaf 4) Extract raw yields from ${OutDirRawyields}/Distr_${Particle}_data${CutSets[$iCutSet]}.root $(tput sgr0)
-    if [ ${Particle} != "D0" ]; then
+    if [ ${Particle} == "Dstar" ]; then
+      python3 GetRawYieldsDplusDs.py ${cfgFileFit} ${Cent} ${OutDirRawyields}/Distr_${Particle}_data${CutSets[$iCutSet]}.root ${OutDirRawyields}/RawYields${Particle}${CutSets[$iCutSet]}.root  --batch
+    elif [ ${Particle} != "D0" ]; then
       echo '.x GetRawYieldsDplusDs.C+('${Cent}',false, "'${OutDirRawyields}'/Distr_'${Particle}'_data'${CutSets[$iCutSet]}'.root", "'${cfgFileFit}'", "'${OutDirRawyields}'/RawYields'${Particle}${CutSets[$iCutSet]}'.root")' | root -l -b
       echo '.q'
     else

@@ -84,19 +84,31 @@ def make_cuts():
 def make_cuts_ml():
     var_key = ['ML_output_FD'] # ['ML_output_FD', 'ML_output_Bkg']
     var_tag = ['outFD'] # ['outFD', 'outBkg'] # used in file names to reduce length
-    step_variation = [{"4": 0.02, "6": 0.02}]
+    #step_variation = [{"1": 0.03, "2": 0.03, "4": 0.03, "6": 0.03, "8": 0.03, "12": 0.03}]
+    step_variation = [{"1.0": 0.023, "1.2": 0.023, "1.4": 0.023, "1.6": 0.023, "1.8": 0.023, \
+                       "2.0": 0.023, "2.2": 0.023, "2.4": 0.023, "2.6": 0.023, "2.8": 0.023, \
+                       "3.0": 0.03, "3.2": 0.03, "3.4": 0.03, "3.6": 0.03, "3.8": 0.03, \
+                       "4.0": 0.03, "4.2": 0.03, "4.4": 0.03, "4.6": 0.03, "4.8": 0.03, \
+                       "5.0": 0.03, "5.2": 0.03, "5.4": 0.03, "5.6": 0.03, "5.8": 0.03, \
+                       "6.0": 0.03, "6.2": 0.03, "6.4": 0.03, "6.6": 0.03, "6.8": 0.03, \
+                       "7.0": 0.03, "7.2": 0.03, "7.4": 0.03, "7.6": 0.03, "7.8": 0.03, \
+                       "8.0": 0.03, "8.2": 0.03, "8.4": 0.03, "8.6": 0.03, "8.8": 0.03, \
+                       "9.0": 0.03, "9.2": 0.03, "9.4": 0.03, "9.6": 0.03, "9.8": 0.03, \
+                       "10.0": 0.03, "10.2": 0.03, "10.4": 0.03, "10.6": 0.03, "10.8": 0.03, \
+                       "11.0": 0.03, "11.2": 0.03, "11.4": 0.03, "11.6": 0.03, "11.8": 0.03}]
         # {"2": 0.0001, "3": 0.00005, "4": 0.00005, "5": 0.00005, "6": 0.0001, "8": 0.0002, "12": 0.002, "16": 0.002, "24": 0.002, "36": 0.001}]
         # {"2": 0.00005, "3": 0.00005, "4": 0.00005, "5": 0.00005, "6": 0.0001, "8": 0.0002, "12": 0.002, "16": 0.002, "24": 0.002, "36": 0.001} 0-10%
         # {"2": 0.0001, "3": 0.0001, "4": 0.0001, "5": 0.0001, "6": 0.0002, "8": 0.001, "12": 0.002, "16": 0.002, "24": 0.002, "36": 0.001} 30-50%
         # [{"2": 0.01, "4": 0.01, "6": 0.01, "8": 0.01, "12": 0.01},
         #  {"2": 0.0005, "4": 0.0005, "6": 0.001, "8": 0.001, "12": 0.0005}]
+
     num_step_pos = 13
     num_step_neg = 10
     edge_to_vary = ['min'] # ['min', 'max']
 
-    in_dir = 'configfiles/cutsets/LctopK0s/'
-    cut_file_central = 'cutset_LctopK0s_13TeV_presel_FDEn.yml'
-    out_dir = 'configfiles/cutsets/LctopK0s/'
+    in_dir = 'configfiles/cutsets/Dstar/pp/'
+    cut_file_central = 'cutset_Dstar_HM_Opti0306_FD_small.yml'
+    out_dir = 'configfiles/cutsets/Dstar/pp/CutVar_Opti0306_small/'
     out_file_tag = 'cutset_ML'
 
     if not os.path.exists(out_dir):
@@ -120,11 +132,11 @@ def make_cuts_ml():
             cuts = cutset_mod['cutvars'][var_key[i]]
             for min_val, max_val, pt_min in zip(cuts['min'], cuts['max'], cutset_mod['cutvars']['Pt']['min']):
                 if edge_to_vary[i] == 'min':
-                    new_value = min_val + step * step_variation[i][f'{pt_min:.0f}']
+                    new_value = min_val + step * step_variation[i][f'{pt_min:.1f}']
                     if(new_value < 0. or new_value >= max_val):
                         new_value = min_val
                 else:
-                    new_value = max_val + step * step_variation[i][f'{pt_min:.0f}']
+                    new_value = max_val + step * step_variation[i][f'{pt_min:.1f}']
                     if(new_value > 1. or new_value <= min_val):
                         new_value = max_val
                 modified_list.append(new_value)

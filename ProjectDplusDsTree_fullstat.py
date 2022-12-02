@@ -26,6 +26,61 @@ from utils.TaskFileLoader import LoadNormObjFromTask, LoadSparseFromTask
 from utils.DfUtils import FilterBitDf, LoadDfFromRootOrParquet
 from utils.AnalysisUtils import MergeHists, ApplySplineFuncToColumn
 from tqdm import tqdm
+import multiprocessing as mp
+
+def load_and_process_parallel(cuts, ptMin, ptMax, nPtBins, massLimLow, massLimHigh, massBins, inFileNamesData, inputCfg, allDict, outFileName):
+
+    print(f'Projecting distributions for {ptMin:.1f} < pT < {ptMax:.1f} GeV/c')
+    ptLowLabel = ptMin * 10
+    ptHighLabel = ptMax * 10
+    hPt = TH1F(f'hPt_{ptLowLabel:.0f}_{ptHighLabel:.0f}', '', nPtBins, ptLimLow, ptLimHigh)
+    hInvMass = TH1F(f'hMass_{ptLowLabel:.0f}_{ptHighLabel:.0f}', '', massBins, massLimLow, massLimHigh)
+
+    for filedata in tqdm(inFileNamesData):
+        dataFrame = LoadDfFromRootOrParquet(filedata, inputCfg['tree']['dirname'], inputCfg['tree']['treename'])
+        dataFrameSel = dataFrame.astype(float).query(cuts)
+        for pt in dataFrameSel['pt_cand'].to_numpy():
+            hPt.Fill(pt)
+        for mass in dataFrameSel['inv_mass'].to_numpy():
+            hInvMass.Fill(mass)
+    allDict['InvMass'].append(hInvMass)
+    allDict['Pt'].append(hPt)
+    outFileNameTemp = outFileName.replace('.root', f'_temp_{ptLowLabel}_{ptHighLabel}.root')
+    outFile2 = TFile(outFileNameTemp, 'recreate')
+    outFile2.cd()
+    hPt.Write()
+    hInvMass.Write()
+    outFile2.Close()
+
+
+def _callback(err):
+    print(err)
+
+def multi_proc(function, argument_list, kw_argument_list, maxperchunk, max_n_procs=10):
+
+    chunks_args = [argument_list[x:x+maxperchunk] \
+            for x in range(0, len(argument_list), maxperchunk)]
+    if not kw_argument_list:
+        kw_argument_list = [{} for _ in argument_list]
+    chunks_kwargs = [kw_argument_list[x:x+maxperchunk] \
+            for x in range(0, len(kw_argument_list), maxperchunk)]
+    res_all = []
+    for chunk_args, chunk_kwargs in zip(chunks_args, chunks_kwargs):
+        print("Processing new chunck size=", maxperchunk)
+        pool = mp.Pool(max_n_procs)
+        res = [pool.apply_async(function, args=args, kwds=kwds, error_callback=_callback) \
+                for args, kwds in zip(chunk_args, chunk_kwargs)]
+        pool.close()
+        pool.join()
+        res_all.extend(res)
+
+    res_list = None
+    try:
+        res_list = [r.get() for r in res_all]
+    except Exception as e: # pylint: disable=broad-except
+        print("EXCEPTION")
+        print(e)
+    return res_list
 
 parser = argparse.ArgumentParser(description='Arguments to pass')
 parser.add_argument('cfgFileName', metavar='text', default='cfgFileName.yml',
@@ -420,60 +475,66 @@ else:
     #dataFrame = LoadDfFromRootOrParquet(inputCfg['tree']['filenameAll'], inputCfg['tree']['dirname'],
     #                                    inputCfg['tree']['treename'])
 
-    for (cuts, ptMin, ptMax) in zip(selToApply, cutVars['Pt']['min'], cutVars['Pt']['max']):
-        print(f'Projecting distributions for {ptMin:.1f} < pT < {ptMax:.1f} GeV/c')
-        ptLowLabel = ptMin * 10
-        ptHighLabel = ptMax * 10
-        hPt = TH1F(f'hPt_{ptLowLabel:.0f}_{ptHighLabel:.0f}', '', nPtBins, ptLimLow, ptLimHigh)
-        hInvMass = TH1F(f'hMass_{ptLowLabel:.0f}_{ptHighLabel:.0f}', '', massBins, massLimLow, massLimHigh)
-
-        for filedata in tqdm(inFileNamesData):
-            dataFrame = LoadDfFromRootOrParquet(filedata, inputCfg['tree']['dirname'], inputCfg['tree']['treename'])
-            dataFrameSel = dataFrame.astype(float).query(cuts)
-            for pt in dataFrameSel['pt_cand'].to_numpy():
-                hPt.Fill(pt)
-            for mass in dataFrameSel['inv_mass'].to_numpy():
-                hInvMass.Fill(mass)
-        allDict['InvMass'].append(hInvMass)
-        allDict['Pt'].append(hPt)
-        outFile.cd()
-        hPt.Write()
-        hInvMass.Write()
+    argspar = [(cuts, ptMin, ptMax, nPtBins, massLimLow, massLimHigh, massBins, inFileNamesData, inputCfg, allDict, args.outFileName) for (cuts, ptMin, ptMax) in zip(selToApply, cutVars['Pt']['min'], cutVars['Pt']['max'])]
+    multi_proc(load_and_process_parallel, argspar, None, 35, 30)
+    outFileNameAdd = args.outFileName
+    outFileNameMerge = outFileNameAdd.replace('.root', '_merged.root')
+    outFileNameTemp = outFileNameAdd.replace('.root', '_temp*.root')
+    os.system(f'hadd -f {outFileNameMerge} {outFileNameTemp}')
+    os.system(f'rm {outFileNameTemp}')
+    #for (cuts, ptMin, ptMax) in zip(selToApply, cutVars['Pt']['min'], cutVars['Pt']['max']):
+    #    print(f'Projecting distributions for {ptMin:.1f} < pT < {ptMax:.1f} GeV/c')
+    #    ptLowLabel = ptMin * 10
+    #    ptHighLabel = ptMax * 10
+    #    hPt = TH1F(f'hPt_{ptLowLabel:.0f}_{ptHighLabel:.0f}', '', nPtBins, ptLimLow, ptLimHigh)
+    #    hInvMass = TH1F(f'hMass_{ptLowLabel:.0f}_{ptHighLabel:.0f}', '', massBins, massLimLow, massLimHigh)
+    #    for filedata in tqdm(inFileNamesData):
+    #        dataFrame = LoadDfFromRootOrParquet(filedata, inputCfg['tree']['dirname'], inputCfg['tree']['treename'])
+    #        dataFrameSel = dataFrame.astype(float).query(cuts)
+    #        for pt in dataFrameSel['pt_cand'].to_numpy():
+    #            hPt.Fill(pt)
+    #        for mass in dataFrameSel['inv_mass'].to_numpy():
+    #            hInvMass.Fill(mass)
+    #    allDict['InvMass'].append(hInvMass)
+    #    allDict['Pt'].append(hPt)
+    #    outFile.cd()
+    #    hPt.Write()
+    #    hInvMass.Write()
 
     # merge adiacent pt bin histograms
-    for iPt in range(0, len(cutVars['Pt']['min']) - 1):
-        ptLowLabel = cutVars['Pt']['min'][iPt] * 10
-        ptHighLabel = cutVars['Pt']['max'][iPt+1] * 10
-        hPtMerged = MergeHists([allDict['Pt'][iPt], allDict['Pt'][iPt+1]])
-        hPtMerged.SetName(f'hPt_{ptLowLabel:.0f}_{ptHighLabel:.0f}')
-        hPtMerged.Write()
-        hInvMassMerged = MergeHists([allDict['InvMass'][iPt], allDict['InvMass'][iPt+1]])
-        hInvMassMerged.SetName(f'hMass_{ptLowLabel:.0f}_{ptHighLabel:.0f}')
-        hInvMassMerged.Write()
+    #for iPt in range(0, len(cutVars['Pt']['min']) - 1):
+    #    ptLowLabel = cutVars['Pt']['min'][iPt] * 10
+    #    ptHighLabel = cutVars['Pt']['max'][iPt+1] * 10
+    #    hPtMerged = MergeHists([allDict['Pt'][iPt], allDict['Pt'][iPt+1]])
+    #    hPtMerged.SetName(f'hPt_{ptLowLabel:.0f}_{ptHighLabel:.0f}')
+    #    hPtMerged.Write()
+    #    hInvMassMerged = MergeHists([allDict['InvMass'][iPt], allDict['InvMass'][iPt+1]])
+    #    hInvMassMerged.SetName(f'hMass_{ptLowLabel:.0f}_{ptHighLabel:.0f}')
+    #    hInvMassMerged.Write()
 
 # merge all pT bins
-ptLowLabel = cutVars['Pt']['min'][0] * 10
-ptHighLabel = cutVars['Pt']['max'][-1] * 10
-for iVar in ('InvMass', 'Pt'):
-    varName = 'Pt' if iVar == 'Pt' else 'Mass'
-    if not isMC:
-        hAllMergedAllPt = MergeHists(allDict[iVar])
-        hAllMergedAllPt.SetName(f'h{varName}_{ptLowLabel:.0f}_{ptHighLabel:.0f}')
-        hAllMergedAllPt.Write()
-    else:
-        hPromptMergedAllPt = MergeHists(promptDict[iVar])
-        hPromptMergedAllPt.SetName(f'hPrompt{varName}_{ptLowLabel:.0f}_{ptHighLabel:.0f}')
-        hPromptMergedAllPt.Write()
-        hFDMergedAllPt = MergeHists(FDDict[iVar])
-        hFDMergedAllPt.SetName(f'hFD{varName}_{ptLowLabel:.0f}_{ptHighLabel:.0f}')
-        hFDMergedAllPt.Write()
-if isMC:
-    hPromptGenMergedAllPt = MergeHists(promptGenList)
-    hPromptGenMergedAllPt.SetName(f'hPromptGenPt_{ptLowLabel:.0f}_{ptHighLabel:.0f}')
-    hPromptGenMergedAllPt.Write()
-    hFDGenMergedAllPt = MergeHists(FDGenList)
-    hFDGenMergedAllPt.SetName(f'hFDGenPt_{ptLowLabel:.0f}_{ptHighLabel:.0f}')
-    hFDGenMergedAllPt.Write()
+#ptLowLabel = cutVars['Pt']['min'][0] * 10
+#ptHighLabel = cutVars['Pt']['max'][-1] * 10
+#for iVar in ('InvMass', 'Pt'):
+#    varName = 'Pt' if iVar == 'Pt' else 'Mass'
+#    if not isMC:
+#        hAllMergedAllPt = MergeHists(allDict[iVar])
+#        hAllMergedAllPt.SetName(f'h{varName}_{ptLowLabel:.0f}_{ptHighLabel:.0f}')
+#        hAllMergedAllPt.Write()
+#    else:
+#        hPromptMergedAllPt = MergeHists(promptDict[iVar])
+#        hPromptMergedAllPt.SetName(f'hPrompt{varName}_{ptLowLabel:.0f}_{ptHighLabel:.0f}')
+#        hPromptMergedAllPt.Write()
+#        hFDMergedAllPt = MergeHists(FDDict[iVar])
+#        hFDMergedAllPt.SetName(f'hFD{varName}_{ptLowLabel:.0f}_{ptHighLabel:.0f}')
+#        hFDMergedAllPt.Write()
+#if isMC:
+#    hPromptGenMergedAllPt = MergeHists(promptGenList)
+#    hPromptGenMergedAllPt.SetName(f'hPromptGenPt_{ptLowLabel:.0f}_{ptHighLabel:.0f}')
+#    hPromptGenMergedAllPt.Write()
+#    hFDGenMergedAllPt = MergeHists(FDGenList)
+#    hFDGenMergedAllPt.SetName(f'hFDGenPt_{ptLowLabel:.0f}_{ptHighLabel:.0f}')
+#    hFDGenMergedAllPt.Write()
 
 # normalisation
 hEvForNorm = TH1F("hEvForNorm", ";;Number of events", 2, 0., 2.)

@@ -1,0 +1,22 @@
+isMC: yes
+filename: [/data/TTree/DstarFemto/vAN-20221009_ROOT6-1/AnalysisResults_merge_MCV0M.root]
+isReducedVariables: no
+isWithBinfo: no
+dirname: PWGHF_D2H_TreeDstartoD0piHM_apply100522
+listname: coutputTreeDstartoD0piHM_apply100522
+sparsenameAll: null
+sparsenamePrompt: fnSparseReco_fromC
+sparsenameFD: fnSparseReco_fromB
+sparsenameGenPrompt: fnSparseAcc_fromC
+sparsenameGenFD: fnSparseAcc_fromB
+enableRef: no #always no for data
+enableSecPeak: no #always no for data
+sparsenamePromptSecPeak: null
+sparsenameFDSecPeak: null
+sparsenameGenPromptSecPeak: null
+sparsenameGenFDSecPeak: null
+normname: NormalizationCounter
+histoevname: hNEvents
+shiftForRedVariables: 7
+
+

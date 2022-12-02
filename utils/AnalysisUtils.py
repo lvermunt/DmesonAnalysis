@@ -107,6 +107,7 @@ def GetPromptFDYieldsAnalyticMinimisation(effPromptList, effFDList, rawYieldList
                 mCorrSets.itemset((iCutSetRow, iCutSetCol), rho)
 
         mCovSets = np.matrix(mCovSets)
+        print(np.linalg.eigvalsh(mCovSets))
         mWeights = np.linalg.inv(np.linalg.cholesky(mCovSets))
         mWeights = mWeights.T * mWeights
         mEffT = mEff.T

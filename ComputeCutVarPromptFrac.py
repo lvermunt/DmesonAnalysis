@@ -206,17 +206,29 @@ if cutSetCfg['linearplot']['enable']:
         fNfdNpromptUpper = []
         fNfdNpromptLower = []
 
-for iPt in range(hRawYields[0].GetNbinsX()):
-    ptMin = hRawYields[0].GetBinLowEdge(iPt+1)
-    ptMax = ptMin + hRawYields[0].GetBinWidth(iPt+1)
+for iPt_ in range(hRawYields[0].GetNbinsX()):
 
-    listRawYield = [hRaw.GetBinContent(iPt+1) for hRaw in hRawYields]
-    listRawYieldUnc = [hRaw.GetBinError(iPt+1) for hRaw in hRawYields]
-    listEffPrompt = [hEffP.GetBinContent(iPt+1) for hEffP in hEffPrompt]
-    listEffPromptUnc = [hEffP.GetBinError(iPt+1) for hEffP in hEffPrompt]
-    listEffFD = [hEffF.GetBinContent(iPt+1) for hEffF in hEffFD]
-    listEffFDUnc = [hEffF.GetBinError(iPt+1) for hEffF in hEffFD]
-    listBkg = [hbkg.GetBinContent(iPt+1) for hbkg in hBkg]
+    ptMin = hRawYields[0].GetBinLowEdge(iPt_+1)
+    ptMax = ptMin + hRawYields[0].GetBinWidth(iPt_+1)
+
+    print(f"Analysing pT {ptMin} - {ptMax}")
+    iPt = iPt_
+    #if iPt_ > 8 and iPt_ < 19:
+    #    continue
+    #if iPt_ > 9:
+    #   iPt = iPt_ - 10
+    #if iPt_ == 20:
+    #    continue
+    #if iPt_ > 20:
+    #   iPt = iPt - 1
+
+    listRawYield = [hRaw.GetBinContent(iPt_+1) for hRaw in hRawYields]
+    listRawYieldUnc = [hRaw.GetBinError(iPt_+1) for hRaw in hRawYields]
+    listEffPrompt = [hEffP.GetBinContent(iPt_+1) for hEffP in hEffPrompt]
+    listEffPromptUnc = [hEffP.GetBinError(iPt_+1) for hEffP in hEffPrompt]
+    listEffFD = [hEffF.GetBinContent(iPt_+1) for hEffF in hEffFD]
+    listEffFDUnc = [hEffF.GetBinError(iPt_+1) for hEffF in hEffFD]
+    listBkg = [hbkg.GetBinContent(iPt_+1) for hbkg in hBkg]
     listBkgUnc = [hbkg.GetBinError(iPt+1) for hbkg in hBkg]
 
     if cutSetCfg['linearplot']['enable']:
@@ -271,16 +283,16 @@ for iPt in range(hRawYields[0].GetNbinsX()):
         GetPromptFDYieldsAnalyticMinimisation(listEffPrompt, listEffFD, listRawYield, listEffPromptUnc, listEffFDUnc,
                                               listRawYieldUnc, cutSetCfg['minimisation']['correlated'])
 
-    hCorrYieldPrompt.SetBinContent(iPt+1, corrYields.item(0))
-    hCorrYieldPrompt.SetBinError(iPt+1, np.sqrt(covMatrixCorrYields.item(0, 0)))
-    hCorrYieldFD.SetBinContent(iPt+1, corrYields.item(1))
-    hCorrYieldFD.SetBinError(iPt+1, np.sqrt(covMatrixCorrYields.item(1, 1)))
+    hCorrYieldPrompt.SetBinContent(iPt_+1, corrYields.item(0))
+    hCorrYieldPrompt.SetBinError(iPt_+1, np.sqrt(covMatrixCorrYields.item(0, 0)))
+    hCorrYieldFD.SetBinContent(iPt_+1, corrYields.item(1))
+    hCorrYieldFD.SetBinError(iPt_+1, np.sqrt(covMatrixCorrYields.item(1, 1)))
     for covElem in product(range(2), range(2)):
-        hCovCorrYields[covElem[0]][covElem[1]].SetBinContent(iPt+1, covMatrixCorrYields.item(covElem))
-        hCovCorrYields[covElem[0]][covElem[1]].SetBinError(iPt+1, 0.)
+        hCovCorrYields[covElem[0]][covElem[1]].SetBinContent(iPt_+1, covMatrixCorrYields.item(covElem))
+        hCovCorrYields[covElem[0]][covElem[1]].SetBinError(iPt_+1, 0.)
 
-    ptString = f'pT{ptMin:.0f}_{ptMax:.0f}'
-    commonString = f'{ptMin:.0f} < #it{{p}}_{{T}} < {ptMax:.0f}  GeV/#it{{c}};cut set'
+    ptString = f'pT{10*ptMin:.0f}_{10*ptMax:.0f}'
+    commonString = f'{ptMin:.1f} < #it{{p}}_{{T}} < {ptMax:.1f}  GeV/#it{{c}};cut set'
     hRawYieldsVsCut.append(TH1F(f'hRawYieldsVsCutPt_{ptString}', f'{commonString};raw yield', nSets, 0.5, nSets + 0.5))
     hRawYieldsVsCutReSum.append(TH1F(f'hRawYieldsVsCutReSum_{ptString}', f'{commonString};raw yield',
                                      nSets, 0.5, nSets + 0.5))

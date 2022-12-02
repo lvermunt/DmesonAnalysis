@@ -151,7 +151,7 @@ for iPt, (ptMin, ptMax, secPeak) in enumerate(zip(ptMins, ptMaxs, inclSecPeak)):
         if secPeak:
             hMass[iPt].Add(infile.Get('hPromptSecPeakMass_{0:.0f}_{1:.0f}'.format(ptMin*10, ptMax*10)))
             hMass[iPt].Add(infile.Get('hFDSecPeakMass_{0:.0f}_{1:.0f}'.format(ptMin*10, ptMax*10)))
-            hMass[iPt].SetDirectory(0)
+        hMass[iPt].SetDirectory(0)
     hMass[iPt].Sumw2()
     SetObjectStyle(hMass[iPt], color=kBlack, markerstyle=kFullCircle)
 

@@ -1,0 +1,20 @@
+cutvars:
+    InvMass:
+        axisnum: 0
+        name: 'inv_mass'
+    Pt:
+        axisnum: 1
+        min: [ 1., 2., 4., 6., 8.,  12. ]
+        max: [ 2., 4., 6., 8., 12., 50. ]
+        name: 'pt_cand'
+    ML_output_Bkg:
+        axisnum: 5
+        min: [-10., -10., -10., -10., -10., -10. ]
+        max: [0.0055, 0.007, 0.04, 0.175, 0.34, 0.45 ]
+        name: 'ML_output_Bkg'
+    ML_output_FD:
+        axisnum: 7
+        min: [0.40, 0.40, 0.40, 0.40, 0.40, 0.40 ]
+        max: [10., 10., 10., 10., 10., 10. ]
+        name: 'ML_output_FD'
+
